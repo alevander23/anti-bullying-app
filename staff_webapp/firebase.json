@@ -1,0 +1,29 @@
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "chbcantibullying-e7ef9",
+          "configurations": {
+            "web": "1:536402869719:web:1e7a9cc1ccb54718031f92"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "site": "chbc-report-bullying-staff",
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

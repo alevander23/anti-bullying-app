@@ -1,0 +1,51 @@
+#############################
+# Global ignores
+#############################
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE config
+.vscode/
+.idea/
+*.iml
+
+# Firebase
+.firebase/
+*.runtimeconfig.json
+*.secret.json
+serviceAccountKey.json
+.firebaserc
+firebase-debug.log
+.firebase-tools-instant.json
+
+#############################
+# Flutter projects
+# (anti_bullying and staff_webapp)
+#############################
+**/build/
+**/.dart_tool/
+**/.packages
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.metadata
+
+# Flutter generated files
+**/pubspec.lock
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/App.framework
+**/ios/.generated
+**/android/.gradle/
+**/android/local.properties
+**/android/key.properties
+
+#############################
+# Node.js (cloud_functions/functions)
+#############################
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+**/package-lock.json

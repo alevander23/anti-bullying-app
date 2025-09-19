@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "536402869719",
+    "project_id": "chbcantibullying-e7ef9",
+    "storage_bucket": "chbcantibullying-e7ef9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536402869719:android:e12deaf313e30274031f92",
+        "android_client_info": {
+          "package_name": "com.example.anti_bullying"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRt2rpisiZcTlou4z2i389fG5BSHKm6c8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

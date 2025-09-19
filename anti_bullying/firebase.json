@@ -1,0 +1,40 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "chbcantibullying-e7ef9",
+          "appId": "1:536402869719:android:e12deaf313e30274031f92",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "chbcantibullying-e7ef9",
+          "configurations": {
+            "android": "1:536402869719:android:e12deaf313e30274031f92",
+            "ios": "1:536402869719:ios:6fac60b4794dea67031f92",
+            "macos": "1:536402869719:ios:6fac60b4794dea67031f92",
+            "web": "1:536402869719:web:57b31c99bcb7846e031f92",
+            "windows": "1:536402869719:web:1e7a9cc1ccb54718031f92"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "site": "cbhc-report-bullying",
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
