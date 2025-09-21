@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get_it/get_it.dart';
 import 'package:staff_webapp/data/data_sources/staff_remote_data_source.dart';
+import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'data/repository_implementations/ticket_repository_impl.dart';
 import 'domain/use_cases/resolve_ticket_use_case.dart';
 import 'domain/use_cases/get_ticket_by_id_use_case.dart';   // <-- ADD THIS
@@ -30,5 +31,8 @@ void setupDependencies() {
   );
   getIt.registerSingleton<GetTicketByIdUseCase>(    // <-- FIX HERE
     GetTicketByIdUseCase(getIt<TicketRepository>()),
+  );
+  getIt.registerSingleton<LoginUseCase>(
+    LoginUseCase(),
   );
 }
