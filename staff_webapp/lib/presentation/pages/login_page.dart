@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/di.dart';
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
+import 'package:staff_webapp/main.dart';
 import 'package:staff_webapp/presentation/bloc/login_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/login_state.dart';
+import 'package:staff_webapp/presentation/pages/waiting_page.dart';
 
 class LoginPage extends StatelessWidget {
   final LoginCubit _loginCubit = LoginCubit(getIt<LoginUseCase>());
@@ -50,6 +52,11 @@ class LoginPage extends StatelessWidget {
                   child: BlocConsumer<LoginCubit, LoginState>(
                     listener: (context, state) {
                       if (state.success) {
+                        if (state.user!.isAuthorized) {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
+                        } else {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => WaitingPage()));
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("✅ Login successful"),
@@ -60,7 +67,6 @@ class LoginPage extends StatelessWidget {
                         // Navigate to home or dashboard here
                         // Navigator.pushReplacementNamed(context, "/home");
                       }
-
                       if (state.error != null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

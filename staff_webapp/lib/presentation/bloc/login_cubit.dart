@@ -1,3 +1,4 @@
+import 'package:staff_webapp/domain/entities/user_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'package:staff_webapp/presentation/bloc/login_state.dart';
@@ -14,8 +15,12 @@ class LoginCubit extends Cubit<LoginState> {
     }
     emit(state.copyWith(loading: true, error: null));
     try {
-      await _loginUseCase.execute(username, password);
-      emit(state.copyWith(loading: false, success: true));
+      final user = await _loginUseCase.execute(username, password);
+      if (user != null) {
+        emit(state.copyWith(loading: false, success: true, user: user));
+      } else {
+        emit(state.copyWith(loading: false, error: "Invalid credentials"));
+      }
     } catch (e) {
       emit(state.copyWith(loading: false, error: e.toString()));
     }

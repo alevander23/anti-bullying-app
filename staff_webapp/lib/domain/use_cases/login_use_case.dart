@@ -1,5 +1,12 @@
+import '../entities/user_entity.dart';
+import '../repository_contracts/user_repository.dart';
+
 class LoginUseCase {
-  Future<void> execute(username, password) async {
-    throw Exception("Wrong Username and password");
+  final UserRepository userRepository;
+
+  LoginUseCase(this.userRepository);
+
+  Future<User?> execute(String username, String password) {
+    return userRepository.login(username, password);
   }
 }
