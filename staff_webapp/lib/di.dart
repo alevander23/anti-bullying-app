@@ -5,6 +5,7 @@ import 'package:staff_webapp/data/data_sources/user_remote_data_source.dart';
 import 'package:staff_webapp/data/repository_implementations/user_repository_impl.dart';
 import 'package:staff_webapp/domain/repository_contracts/user_repository.dart';
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
+import 'package:staff_webapp/domain/use_cases/create_user_use_case.dart';
 import 'data/repository_implementations/ticket_repository_impl.dart';
 import 'domain/use_cases/resolve_ticket_use_case.dart';
 import 'domain/use_cases/get_ticket_by_id_use_case.dart';   // <-- ADD THIS
@@ -43,5 +44,8 @@ void setupDependencies() {
   );
   getIt.registerSingleton<LoginUseCase>(
     LoginUseCase(getIt<UserRepository>()),
+  );
+  getIt.registerSingleton<CreateUserUseCase>(
+    CreateUserUseCase(getIt<UserRepository>()),
   );
 }

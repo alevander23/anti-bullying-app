@@ -13,7 +13,12 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<User?> login(String username, String password) {
-    return remoteDataSource.fetchUser(username, password);
+  Future<User?> login(String username, String password) async {
+    return await remoteDataSource.fetchUser(username, password);
+  }
+
+  @override
+  Future<User?> createUser(String username, String password) async {
+    return await remoteDataSource.createUser(username, password); // Dart was complaining and was confused so asked chatGPT and it said to do this
   }
 }
