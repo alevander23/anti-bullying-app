@@ -8,14 +8,14 @@ class LoginCubit extends Cubit<LoginState> {
 
   LoginCubit(this._loginUseCase):super(LoginState.initial());
   
-  Future<void> attemptLogin(String username, String password) async {
-    if (username.isEmpty || password.isEmpty) {
+  Future<void> attemptLogin(String email, String password) async {
+    if (email.isEmpty || password.isEmpty) {
       emit(state.copyWith(error: "Not all inputs filled"));
       return;
     }
     emit(state.copyWith(loading: true, error: null));
     try {
-      final user = await _loginUseCase.execute(username, password);
+      final user = await _loginUseCase.execute(email, password);
       if (user != null) {
         emit(state.copyWith(loading: false, success: true, user: user));
       } else {

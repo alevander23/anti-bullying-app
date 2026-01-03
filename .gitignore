@@ -15,7 +15,6 @@ Thumbs.db
 *.runtimeconfig.json
 *.secret.json
 serviceAccountKey.json
-.firebaserc
 firebase-debug.log
 .firebase-tools-instant.json
 

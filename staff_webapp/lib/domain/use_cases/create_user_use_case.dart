@@ -6,7 +6,7 @@ class CreateUserUseCase {
 
   CreateUserUseCase(this.userRepository);
 
-  Future<User?> execute(String username, String password) {
-    return userRepository.createUser(username, password);
+  Future<User?> execute(String email, String password) {
+    return userRepository.createUser(email, password);
   }
 }

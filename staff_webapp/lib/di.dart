@@ -1,4 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get_it/get_it.dart';
 import 'package:staff_webapp/data/data_sources/staff_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/user_remote_data_source.dart';
@@ -13,10 +15,15 @@ import 'domain/repository_contracts/ticket_repository.dart';
 
 final getIt = GetIt.instance;
 
-void setupDependencies() {
+Future<void> setupDependencies() async {
+  // Firebase Auth
+  final firebaseApp = Firebase.app(); // Get the default initialized app
+  getIt.registerSingleton<FirebaseAuth>(FirebaseAuth.instanceFor(app: firebaseApp));
+
+
   // Cloud Functions (region aware)
   getIt.registerSingleton<FirebaseFunctions>(
-    FirebaseFunctions.instanceFor(region: 'australia-southeast1'),
+    FirebaseFunctions.instanceFor(region: 'australia-southeast1', app: firebaseApp),
   );
 
   // Data source
@@ -24,7 +31,7 @@ void setupDependencies() {
     TicketRemoteDataSourceImpl(getIt<FirebaseFunctions>()),
   );
   getIt.registerSingleton<UserRemoteDataSource>(
-    UserRemoteDataSource(),
+    UserRemoteDataSource(getIt<FirebaseAuth>()),
   );
 
   // Repository

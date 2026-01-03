@@ -5,12 +5,12 @@ import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'package:staff_webapp/main.dart';
 import 'package:staff_webapp/presentation/bloc/login_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/login_state.dart';
-import 'package:staff_webapp/presentation/pages/create_user_page';
+import 'package:staff_webapp/presentation/pages/create_user_page.dart';
 import 'package:staff_webapp/presentation/pages/waiting_page.dart';
 
 class LoginPage extends StatelessWidget {
   final LoginCubit _loginCubit = LoginCubit(getIt<LoginUseCase>());
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   @override
@@ -82,7 +82,7 @@ class LoginPage extends StatelessWidget {
                         children: [
                           // Username
                           TextField(
-                            controller: usernameController,
+                            controller: emailController,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.person),
                               labelText: "Username",
@@ -114,7 +114,7 @@ class LoginPage extends StatelessWidget {
                               onPressed: state.loading
                                   ? null
                                   : () {
-                                      String username = usernameController.text;
+                                      String username = emailController.text;
                                       String password = passwordController.text;
                                       context
                                           .read<LoginCubit>()

@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:staff_webapp/di.dart'; // 👈 import getIt
-import 'package:staff_webapp/domain/use_cases/create_user_use_case.dart'; // 👈 import use case
+import 'package:staff_webapp/di.dart';
+import 'package:staff_webapp/domain/use_cases/create_user_use_case.dart';
 import 'package:staff_webapp/presentation/bloc/create_user_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/create_user_state.dart';
 import 'package:staff_webapp/presentation/pages/login_page.dart';
 
 class CreateUserPage extends StatelessWidget {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // 👇 Inject cubit with use case from getIt
       create: (_) => CreateUserCubit(getIt<CreateUserUseCase>()),
       child: Scaffold(
         backgroundColor: Colors.grey[100],
@@ -73,10 +72,10 @@ class CreateUserPage extends StatelessWidget {
                       return Column(
                         children: [
                           TextField(
-                            controller: usernameController,
+                            controller: emailController,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.person_add),
-                              labelText: "Username",
+                              labelText: "Email",
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -103,13 +102,13 @@ class CreateUserPage extends StatelessWidget {
                               onPressed: state.loading
                                   ? null
                                   : () {
-                                      final username =
-                                          usernameController.text.trim();
+                                      final email =
+                                          emailController.text.trim();
                                       final password =
                                           passwordController.text.trim();
                                       context
                                           .read<CreateUserCubit>()
-                                          .createUser(username, password);
+                                          .createUser(email, password);
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blueAccent,

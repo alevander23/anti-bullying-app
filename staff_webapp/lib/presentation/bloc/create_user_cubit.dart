@@ -8,8 +8,8 @@ class CreateUserCubit extends Cubit<CreateUserState> {
 
   CreateUserCubit(this._createUserUseCase) : super(CreateUserState.initial());
 
-  Future<void> createUser(String username, String password) async {
-    if (username.isEmpty || password.isEmpty) {
+  Future<void> createUser(String email, String password) async {
+    if (email.isEmpty || password.isEmpty) {
       emit(state.copyWith(error: "Not all inputs filled"));
       return;
     }
@@ -17,7 +17,7 @@ class CreateUserCubit extends Cubit<CreateUserState> {
     emit(state.copyWith(loading: true, error: null));
 
     try {
-      final user = await _createUserUseCase.execute(username, password);
+      final user = await _createUserUseCase.execute(email, password);
 
       if (user != null) {
         emit(state.copyWith(

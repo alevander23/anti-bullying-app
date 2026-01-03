@@ -1,9 +1,59 @@
 import admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { beforeUserCreated } from "firebase-functions/v2/identity";
 
 admin.initializeApp();
 const db = admin.firestore();
+
+export const beforeCreated = beforeUserCreated(async (event) => {
+  const user = event.data;
+
+  // Make sure user exists
+  if (!user) return;
+
+  // Assign custom claims at creation
+  // NOTE: In v2 Identity, we modify `user.customClaims` directly
+  user.customClaims = {
+    ...user.customClaims, // preserve any existing claims
+    role: "default",
+  };
+
+  console.log(`Setting custom claim 'role: default' for user: ${user.uid}`);
+
+  // Return the modified user object to apply it
+  return user;
+});
+
+export const checkUserRole = onCall(
+  { region: "australia-southeast1" },
+  async (request) => {
+    try {
+      const auth = request.auth;
+
+      if (!auth) {
+        // User is not authenticated
+        return { allowed: false};
+      }
+
+      // Fetch the full user record to read custom claims
+      const userRecord = await admin.auth().getUser(auth.uid);
+      const claims = userRecord.customClaims || {};
+      const role = claims.role;
+
+      // Only allow 'staff' or 'admin'
+      if (role === "staff" || role === "admin") {
+        return { allowed: true };
+      } else {
+        return { allowed: false};
+      }
+    } catch (error) {
+      console.error("Error checking user role:", error);
+      // Wrap any other error in an HttpsError
+      throw new HttpsError("internal" || "Failed to verify user role");
+    }
+  }
+);
 
 export const getTicketInfo = onCall(
   { region: "australia-southeast1" },

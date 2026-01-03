@@ -53,13 +53,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyApawshZ6k6o-6AixZd_IlstF88l-hKFic',
-    appId: '1:536402869719:web:1e7a9cc1ccb54718031f92',
-    messagingSenderId: '536402869719',
-    projectId: 'chbcantibullying-e7ef9',
-    authDomain: 'chbcantibullying-e7ef9.firebaseapp.com',
-    storageBucket: 'chbcantibullying-e7ef9.firebasestorage.app',
-    measurementId: 'G-GZJQF5DT1V',
+    apiKey: "AIzaSyApawshZ6k6o-6AixZd_IlstF88l-hKFic",
+    authDomain: "chbcantibullying-e7ef9.firebaseapp.com",
+    projectId: "chbcantibullying-e7ef9",
+    storageBucket: "chbcantibullying-e7ef9.firebasestorage.app",
+    messagingSenderId: "536402869719",
+    appId: "1:536402869719:web:2c6218901b8c201f031f92",
+    measurementId: "G-XEFBX0SH6F"
   );
 
 }
