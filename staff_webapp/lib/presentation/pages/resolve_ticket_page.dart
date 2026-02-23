@@ -226,7 +226,7 @@ class _ResolveTicketPageState extends State<ResolveTicketPage> {
 
                               // Resolution dropdown
                               DropdownButtonFormField<String>(
-                                value: _selectedResolution,
+                                initialValue: _selectedResolution,
                                 items: const [
                                   DropdownMenuItem(value: 'genuine', child: Text('Genuine')),
                                   DropdownMenuItem(value: 'malicious', child: Text('Malicious')),

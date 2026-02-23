@@ -1,4 +1,3 @@
-import 'package:staff_webapp/domain/entities/user_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'package:staff_webapp/presentation/bloc/login_state.dart';

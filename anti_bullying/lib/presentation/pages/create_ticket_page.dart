@@ -28,19 +28,21 @@ class CreateTicketPage extends StatelessWidget {
 }
 
 class CreateTicketForm extends StatefulWidget {
+  const CreateTicketForm({super.key});
+
   @override
   _CreateTicketFormState createState() => _CreateTicketFormState();
 }
 
 class _CreateTicketFormState extends State<CreateTicketForm> {
   final _formKey = GlobalKey<FormState>();
-  final _studentIDController = TextEditingController();
+  final _bullyName = TextEditingController();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
 
   @override
   void dispose() {
-    _studentIDController.dispose();
+    _bullyName.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -145,11 +147,11 @@ class _CreateTicketFormState extends State<CreateTicketForm> {
                       children: [
                         // Student ID Field
                         _buildTextField(
-                          controller: _studentIDController,
-                          label: 'Student ID',
-                          hint: 'Enter ID',
+                          controller: _bullyName,
+                          label: 'Bully Name',
+                          hint: 'Name of the person behind the incident',
                           icon: Icons.person_outline,
-                          isRequired: false,
+                          isRequired: true,
                         ),
                         
                         SizedBox(height: 20),
@@ -180,7 +182,7 @@ class _CreateTicketFormState extends State<CreateTicketForm> {
                         // Submit Button
                         BlocBuilder<TicketFormBloc, TicketFormState>(
                           builder: (context, state) {
-                            return Container(
+                            return SizedBox(
                               height: 56,
                               child: ElevatedButton(
                                 onPressed: state is TicketFormSubmitting ? null : _submitForm,
@@ -346,9 +348,9 @@ class _CreateTicketFormState extends State<CreateTicketForm> {
     if (_formKey.currentState!.validate()) {
       context.read<TicketFormBloc>().add(
         TicketFormSubmitted(
-          studentID: _studentIDController.text.trim().isEmpty 
+          studentID: _bullyName.text.trim().isEmpty 
               ? null 
-              : _studentIDController.text.trim(),
+              : _bullyName.text.trim(),
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
         ),
@@ -357,7 +359,7 @@ class _CreateTicketFormState extends State<CreateTicketForm> {
   }
 
   void _clearForm() {
-    _studentIDController.clear();
+    _bullyName.clear();
     _titleController.clear();
     _descriptionController.clear();
   }

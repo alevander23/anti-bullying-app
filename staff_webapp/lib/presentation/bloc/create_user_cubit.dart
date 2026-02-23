@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:staff_webapp/domain/entities/user_entity.dart';
 import 'package:staff_webapp/domain/use_cases/create_user_use_case.dart';
 import 'create_user_state.dart';
 
