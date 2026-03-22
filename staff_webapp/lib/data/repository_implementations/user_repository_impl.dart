@@ -19,6 +19,11 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   Future<User?> createUser(String email, String password) async {
-    return await remoteDataSource.createUser(email, password); // Dart was complaining and was confused so asked chatGPT and it said to do this
+    return await remoteDataSource.createUser(email, password);
+  }
+
+  @override
+  Future<User?> signInWithMicrosoft() async {
+    return await remoteDataSource.signInWithMicrosoft();
   }
 }
