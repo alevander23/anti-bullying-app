@@ -9,4 +9,8 @@ class LoginUseCase {
   Future<User?> execute(String email, String password) {
     return userRepository.login(email, password);
   }
+
+  Future<User?> loginWithMicrosoft() async {
+  return await userRepository.signInWithMicrosoft();
+  }
 }

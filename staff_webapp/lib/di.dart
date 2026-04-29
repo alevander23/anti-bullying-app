@@ -5,9 +5,12 @@ import 'package:get_it/get_it.dart';
 import 'package:staff_webapp/data/data_sources/staff_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/user_remote_data_source.dart';
 import 'package:staff_webapp/data/repository_implementations/user_repository_impl.dart';
+import 'package:staff_webapp/domain/repository_contracts/auth_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/user_repository.dart';
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'package:staff_webapp/domain/use_cases/create_user_use_case.dart';
+import 'package:staff_webapp/domain/use_cases/sign_in_with_google.dart';
+import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
 import 'data/repository_implementations/ticket_repository_impl.dart';
 import 'domain/use_cases/resolve_ticket_use_case.dart';
 import 'domain/use_cases/get_ticket_by_id_use_case.dart';   // <-- ADD THIS
@@ -41,6 +44,9 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<UserRepository>(
     UserRepositoryImpl(getIt<UserRemoteDataSource>()),
   );
+  getIt.registerSingleton<AuthRepository>(
+    AuthRepository()
+  );
 
   // Use Cases
   getIt.registerSingleton<ResolveTicketUseCase>(
@@ -52,7 +58,15 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<LoginUseCase>(
     LoginUseCase(getIt<UserRepository>()),
   );
+  getIt.registerSingleton<SignInWithGoogle>(
+    SignInWithGoogle(getIt<AuthRepository>()),
+  );
   getIt.registerSingleton<CreateUserUseCase>(
     CreateUserUseCase(getIt<UserRepository>()),
   );
+
+  // Cubit
+  getIt.registerSingleton<AuthCubit>(
+    AuthCubit(googleUseCase: getIt(), microsoftUseCase: getIt())
+  )
 }
