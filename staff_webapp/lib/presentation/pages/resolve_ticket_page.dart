@@ -195,7 +195,7 @@ class _ResolveTicketPageState extends State<ResolveTicketPage> {
                                                   ),
                                                 ),
                                               ),
-                                              // 👇 Status chip (label)
+                                              // Status chip (label)
                                               Chip(
                                                 label: Text(
                                                   "STATUS: ${state.ticket!.status.toUpperCase()}",
@@ -266,14 +266,14 @@ class _ResolveTicketPageState extends State<ResolveTicketPage> {
                                   onPressed: state.ticket != null && !state.loading
                                       ? () {
                                           if (state.ticket!.status == "resolved") {
-                                            // 👇 Exit just resets everything
+                                            // Exit just resets everything
                                             context.read<ResolveTicketCubit>().reset();
                                             _ticketIdController.clear();
                                             setState(() {
                                               _selectedResolution = null;
                                             });
                                           } else if (_selectedResolution != null) {
-                                            // 👇 Regular close issue flow
+                                            // Regular close issue flow
                                             _cubit.resolveTicket(
                                               _ticketIdController.text.trim(),
                                               _selectedResolution!,
@@ -292,7 +292,7 @@ class _ResolveTicketPageState extends State<ResolveTicketPage> {
                                         )
                                       : Text(
                                           state.ticket != null && state.ticket!.status == "resolved"
-                                              ? "Exit Incident Issue" // 👈 new text for closed
+                                              ? "Exit Incident Issue" // new text for closed
                                               : "Close Incident",
                                           style: const TextStyle(fontSize: 16, color: Colors.white),
                                         ),

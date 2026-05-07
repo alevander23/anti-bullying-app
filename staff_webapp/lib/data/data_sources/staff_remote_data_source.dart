@@ -27,7 +27,7 @@ class TicketRemoteDataSourceImpl implements TicketRemoteDataSource {
       createdAt: (data['createdAt'] != null)
           ? DateTime.parse(data['createdAt'])
           : DateTime.now(),
-      status: data['status'] ?? 'open', // 👈 NEW FIELD
+      status: data['status'] ?? 'open',
     );
   }
 

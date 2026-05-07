@@ -1,49 +1,105 @@
-// data/repositories/auth_repository_impl.dart
 import 'package:dartz/dartz.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:staff_webapp/core/error/failures.dart';
+import 'package:staff_webapp/data/data_models/user_model.dart';
+import 'package:staff_webapp/data/data_sources/auth_remote_data_source.dart';
 import 'package:staff_webapp/domain/entities/user_entity.dart';
 import 'package:staff_webapp/domain/repository_contracts/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource remoteDataSource;
-  // final NetworkInfo networkInfo; // Helper to check internet
+  final AuthRemoteDataSource _remoteDataSource;
+  final fb.FirebaseAuth _firebaseAuth;
 
   AuthRepositoryImpl({
-    required this.remoteDataSource,
-    // required this.networkInfo,
-  });
+    required AuthRemoteDataSource remoteDataSource,
+    required fb.FirebaseAuth firebaseAuth,
+  })  : _remoteDataSource = remoteDataSource,
+        _firebaseAuth = firebaseAuth;
+
+  // Stream
 
   @override
-  Future<Either<String, User>> signInWithGoogle() async {
-    return await _performAuth(() => remoteDataSource.signInWithGoogle());
+  Stream<User?> get authStateChanges {
+    return _firebaseAuth.authStateChanges().asyncMap((fbUser) async {
+      if (fbUser == null) return null;
+      return UserModel.fromFirebaseUser(fbUser);
+    });
   }
+
+  // Sign in
 
   @override
-  Future<Either<String, User>> signInWithMicrosoft() async {
-    return await _performAuth(() => remoteDataSource.signInWithMicrosoft());
-  }
+  Future<Either<Failure, User>> signInWithMicrosoft() =>
+      _runAuthAction(
+        () => _remoteDataSource.signInWithMicrosoft(),
+        provider: AuthProvider.microsoft,
+      );
 
-  // @override
-  // Future<Either<Failure, User>> signInWithEmail({
-  //   required String email, 
-  //   required String password
-  // }) async {
-  //   return await _performAuth(() => remoteDataSource.signInWithEmail(email, password));
-  // }
+  @override
+  Future<Either<Failure, User>> signInWithGoogle() =>
+      _runAuthAction(
+        () => _remoteDataSource.signInWithGoogle(),
+        provider: AuthProvider.google,
+      );
 
-  // Helper method to keep code DRY and handle errors globally
-  Future<Either<String, User>> _performAuth(Future<UserModel> Function() action) async {
-    if (true /* await networkInfo.isConnected */) {
-      try {
-        final remoteUser = await action();
-        return Right(remoteUser);
-      } on FirebaseAuthException catch (e) {
-        return Left(e.message ?? 'Authentication Failed');
-      } catch (e) {
-        return Left('An unexpected error occurred');
-      }
-    } else {
-      return Left('No internet connection');
+  // Sign out
+
+  @override
+  Future<Either<Failure, void>> signOut() async {
+    try {
+      await _remoteDataSource.signOut();
+      return const Right(null);
+    } on fb.FirebaseAuthException catch (e) {
+      return Left(SignOutFailure(e.message ?? 'Sign-out failed'));
+    } catch (_) {
+      return Left(const SignOutFailure('An unexpected error occurred during sign-out'));
     }
+  }
+
+  // Current user
+
+  @override
+  Future<Either<Failure, User?>> getCurrentUser() async {
+    try {
+      final user = await _remoteDataSource.getCurrentUser();
+      return Right(user);
+    } on fb.FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Failed to restore session'));
+    } catch (_) {
+      return Left(const UnexpectedFailure());
+    }
+  }
+
+  // Helpers
+
+  Future<Either<Failure, User>> _runAuthAction(
+    Future<UserModel> Function() action, {
+    required AuthProvider provider,
+  }) async {
+    try {
+      final user = await action();
+      return Right(user);
+    } on fb.FirebaseAuthException catch (e) {
+      return Left(_mapFirebaseError(e, provider));
+    } catch (_) {
+      return Left(const UnexpectedFailure());
+    }
+  }
+
+  Failure _mapFirebaseError(fb.FirebaseAuthException e, AuthProvider provider) {
+    final message = switch (e.code) {
+      'cancelled-by-user'                          => 'Sign-in was cancelled.',
+      'account-exists-with-different-credential'   => 'An account already exists with the same email using a different sign-in method.',
+      'popup-closed-by-user'                       => 'Sign-in window was closed before completing.',
+      'network-request-failed'                     => 'Network error. Please check your connection.',
+      'too-many-requests'                          => 'Too many attempts. Please try again later.',
+      'user-disabled'                              => 'This account has been disabled.',
+      'invalid-credential'                         => 'Invalid credentials. Please try again.',
+      _                                            => e.message ?? 'Authentication failed.',
+    };
+
+    return provider == AuthProvider.microsoft
+        ? MicrosoftAuthFailure(message, errorCode: e.code)
+        : GoogleAuthFailure(message);
   }
 }

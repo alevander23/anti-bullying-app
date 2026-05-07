@@ -5,7 +5,7 @@ class TicketEntity extends Equatable {
   final String title;
   final String description;
   final DateTime createdAt;
-  final String status; // 👈 new field (e.g. "open", "resolved")
+  final String status;
 
   const TicketEntity({
     required this.id,
