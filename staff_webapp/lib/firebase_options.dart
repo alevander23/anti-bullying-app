@@ -21,25 +21,13 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -53,13 +41,51 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: "AIzaSyApawshZ6k6o-6AixZd_IlstF88l-hKFic",
-    authDomain: "chbcantibullying-e7ef9.firebaseapp.com",
-    projectId: "chbcantibullying-e7ef9",
-    storageBucket: "chbcantibullying-e7ef9.firebasestorage.app",
-    messagingSenderId: "536402869719",
-    appId: "1:536402869719:web:2c6218901b8c201f031f92",
-    measurementId: "G-XEFBX0SH6F"
+    apiKey: 'AIzaSyApawshZ6k6o-6AixZd_IlstF88l-hKFic',
+    appId: '1:536402869719:web:1e7a9cc1ccb54718031f92',
+    messagingSenderId: '536402869719',
+    projectId: 'chbcantibullying-e7ef9',
+    authDomain: 'chbcantibullying-e7ef9.firebaseapp.com',
+    storageBucket: 'chbcantibullying-e7ef9.firebasestorage.app',
+    measurementId: 'G-GZJQF5DT1V',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyD86dPDPS-Ej4Wjg4fwWFv4FvUqZ7qDIS4',
+    appId: '1:536402869719:ios:ce4b03cc0c3d1285031f92',
+    messagingSenderId: '536402869719',
+    projectId: 'chbcantibullying-e7ef9',
+    storageBucket: 'chbcantibullying-e7ef9.firebasestorage.app',
+    iosClientId: '536402869719-c5li4arnpkg6h92c8jmpi4n2qj2gr46e.apps.googleusercontent.com',
+    iosBundleId: 'com.example.staffWebapp',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyD86dPDPS-Ej4Wjg4fwWFv4FvUqZ7qDIS4',
+    appId: '1:536402869719:ios:ce4b03cc0c3d1285031f92',
+    messagingSenderId: '536402869719',
+    projectId: 'chbcantibullying-e7ef9',
+    storageBucket: 'chbcantibullying-e7ef9.firebasestorage.app',
+    iosClientId: '536402869719-c5li4arnpkg6h92c8jmpi4n2qj2gr46e.apps.googleusercontent.com',
+    iosBundleId: 'com.example.staffWebapp',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyDRt2rpisiZcTlou4z2i389fG5BSHKm6c8',
+    appId: '1:536402869719:android:92b61a4580e00ee5031f92',
+    messagingSenderId: '536402869719',
+    projectId: 'chbcantibullying-e7ef9',
+    storageBucket: 'chbcantibullying-e7ef9.firebasestorage.app',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBE2Jc9TaXAbDqFts_L9bjAunW5rXxTYOQ',
+    appId: '1:536402869719:web:e749682f075bc635031f92',
+    messagingSenderId: '536402869719',
+    projectId: 'chbcantibullying-e7ef9',
+    authDomain: 'chbcantibullying-e7ef9.firebaseapp.com',
+    storageBucket: 'chbcantibullying-e7ef9.firebasestorage.app',
+    measurementId: 'G-4BS7TCVKKS',
   );
 
 }

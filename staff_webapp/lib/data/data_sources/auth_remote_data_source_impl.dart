@@ -27,8 +27,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     final fb.UserCredential credential;
     try {
-      credential = await _firebaseAuth.signInWithProvider(provider);
-    } on fb.FirebaseAuthException {
+      credential = await _firebaseAuth.signInWithPopup(provider);
+    } on fb.FirebaseAuthException catch (e) {
+      print('FirebaseAuthException: code=${e.code} message=${e.message}');
+      rethrow;
+    } catch (e, stack) {
+      print('Unknown error: $e');
+      print(stack);
       rethrow;
     }
 

@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "536402869719",
+    "project_id": "chbcantibullying-e7ef9",
+    "storage_bucket": "chbcantibullying-e7ef9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536402869719:android:e12deaf313e30274031f92",
+        "android_client_info": {
+          "package_name": "com.example.anti_bullying"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "536402869719-2ssn8bc95r5olpu3ljva7mocb0va7p42.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRt2rpisiZcTlou4z2i389fG5BSHKm6c8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "536402869719-2ssn8bc95r5olpu3ljva7mocb0va7p42.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "536402869719-de4as5kk5hbpiid7mojmd3er9qdsh4da.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.antiBullying"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536402869719:android:92b61a4580e00ee5031f92",
+        "android_client_info": {
+          "package_name": "com.example.staff_webapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "536402869719-2ssn8bc95r5olpu3ljva7mocb0va7p42.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRt2rpisiZcTlou4z2i389fG5BSHKm6c8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "536402869719-2ssn8bc95r5olpu3ljva7mocb0va7p42.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "536402869719-de4as5kk5hbpiid7mojmd3er9qdsh4da.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.antiBullying"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
