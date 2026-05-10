@@ -21,15 +21,13 @@ class AdminRemoteDataSource {
 
   CollectionReference get _schools =>
       _firestore.collection(FirestoreConstants.schools);
+
   CollectionReference get _admins =>
       _firestore.collection(FirestoreConstants.admins);
+
   CollectionReference get _reports =>
       _firestore.collection(FirestoreConstants.reports);
 
-  // Current admin
-
-  /// Fetches the Admin document for the currently signed-in user.
-  /// Returns null if no admin doc exists (user not yet provisioned).
   Future<AdminModel?> getCurrentAdmin() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
@@ -39,8 +37,6 @@ class AdminRemoteDataSource {
     return AdminModel.fromFirestore(doc);
   }
 
-  /// Real-time stream of the current admin's document.
-  /// The dashboard listens to this so role/school changes take effect instantly.
   Stream<AdminModel?> watchCurrentAdmin() {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return Stream.value(null);
@@ -51,14 +47,13 @@ class AdminRemoteDataSource {
     });
   }
 
-  // Schools
-
   Future<List<SchoolModel>> getAllSchools() async {
     final snap = await _schools
         .where('isActive', isEqualTo: true)
         .orderBy('name')
         .get();
-    return snap.docs.map(SchoolModel.fromFirestore).toList();
+
+    return snap.docs.map((d) => SchoolModel.fromFirestore(d)).toList();
   }
 
   Future<SchoolModel?> getSchool(String schoolId) async {
@@ -75,11 +70,9 @@ class AdminRemoteDataSource {
   Future<void> updateSchool(String schoolId, Map<String, dynamic> data) =>
       _schools.doc(schoolId).update(data);
 
-  // Admin management (super admin only)
-
   Future<List<AdminModel>> getAllAdmins() async {
     final snap = await _admins.orderBy('name').get();
-    return snap.docs.map(AdminModel.fromFirestore).toList();
+    return snap.docs.map((d) => AdminModel.fromFirestore(d)).toList();
   }
 
   Future<List<AdminModel>> getAdminsForSchool(String schoolId) async {
@@ -87,11 +80,10 @@ class AdminRemoteDataSource {
         .where('schoolId', isEqualTo: schoolId)
         .where('isActive', isEqualTo: true)
         .get();
-    return snap.docs.map(AdminModel.fromFirestore).toList();
+
+    return snap.docs.map((d) => AdminModel.fromFirestore(d)).toList();
   }
 
-  /// Creates or overwrites an admin document.
-  /// The document ID is the user's Firebase Auth UID.
   Future<void> upsertAdmin(AdminModel admin) =>
       _admins.doc(admin.id).set(admin.toFirestore(), SetOptions(merge: true));
 
@@ -101,16 +93,21 @@ class AdminRemoteDataSource {
   Future<void> deactivateAdmin(String adminUid) =>
       _admins.doc(adminUid).update({'isActive': false});
 
-  // Reports
-
-  /// Real-time stream of all reports for a school, newest first.
-  /// This is the primary feed for the dashboard.
   Stream<List<ReportModel>> watchReportsForSchool(String schoolId) {
     return _reports
         .where('schoolId', isEqualTo: schoolId)
         .orderBy('submittedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map(ReportModel.fromFirestore).toList());
+        .map((snap) =>
+            snap.docs.map((d) => ReportModel.fromFirestore(d)).toList());
+  }
+
+  Stream<List<ReportModel>> watchAllReports() {
+    return _reports
+        .orderBy('submittedAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((d) => ReportModel.fromFirestore(d)).toList());
   }
 
   Future<List<ReportModel>> getFilteredReports({
@@ -122,22 +119,27 @@ class AdminRemoteDataSource {
     Query query = _reports.where('schoolId', isEqualTo: schoolId);
 
     if (status != null) {
-      query = query.where('status',
-          isEqualTo: _statusString(status));
+      query = query.where('status', isEqualTo: _statusString(status));
     }
+
     if (priority != null) {
-      query = query.where('priority',
-          isEqualTo: priority == ReportPriority.high
-              ? FirestoreConstants.priorityHigh
-              : FirestoreConstants.priorityNormal);
+      query = query.where(
+        'priority',
+        isEqualTo: priority == ReportPriority.high
+            ? FirestoreConstants.priorityHigh
+            : FirestoreConstants.priorityNormal,
+      );
     }
+
     if (isFlagged != null) {
       query = query.where('isFlagged', isEqualTo: isFlagged);
     }
 
     query = query.orderBy('submittedAt', descending: true);
+
     final snap = await query.get();
-    return snap.docs.map(ReportModel.fromFirestore).toList();
+
+    return snap.docs.map((d) => ReportModel.fromFirestore(d)).toList();
   }
 
   Future<List<ReportModel>> getRecentReports(String schoolId,
@@ -147,7 +149,8 @@ class AdminRemoteDataSource {
         .orderBy('submittedAt', descending: true)
         .limit(limit)
         .get();
-    return snap.docs.map(ReportModel.fromFirestore).toList();
+
+    return snap.docs.map((d) => ReportModel.fromFirestore(d)).toList();
   }
 
   Future<ReportModel?> getReport(String reportId) async {
@@ -165,15 +168,14 @@ class AdminRemoteDataSource {
         .where('status', isEqualTo: FirestoreConstants.statusNew)
         .count()
         .get();
+
     return snap.count ?? 0;
   }
 
-  // Helpers
-
   String _statusString(ReportStatus s) => switch (s) {
-    ReportStatus.newReport  => FirestoreConstants.statusNew,
-    ReportStatus.reviewed   => FirestoreConstants.statusReviewed,
-    ReportStatus.escalated  => FirestoreConstants.statusEscalated,
-    ReportStatus.resolved   => FirestoreConstants.statusResolved,
-  };
+        ReportStatus.newReport => FirestoreConstants.statusNew,
+        ReportStatus.reviewed => FirestoreConstants.statusReviewed,
+        ReportStatus.escalated => FirestoreConstants.statusEscalated,
+        ReportStatus.resolved => FirestoreConstants.statusResolved,
+      };
 }

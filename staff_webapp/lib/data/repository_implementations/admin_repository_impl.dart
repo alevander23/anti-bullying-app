@@ -102,6 +102,10 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Stream<List<Report>> watchReportsForSchool(String schoolId) =>
       _dataSource.watchReportsForSchool(schoolId);
+  
+  @override
+  Stream<List<Report>> watchAllReports() =>
+      _dataSource.watchAllReports();
 
   @override
   Future<Either<Failure, List<Report>>> getFilteredReports({

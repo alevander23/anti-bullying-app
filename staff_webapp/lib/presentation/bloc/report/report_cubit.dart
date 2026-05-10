@@ -1,6 +1,7 @@
 // lib/presentation/bloc/report/report_cubit.dart
 
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
@@ -28,9 +29,29 @@ class ReportCubit extends Cubit<ReportState> {
         .watchReportsForSchool(schoolId)
         .listen(
           (reports) => _emitFiltered(reports),
-          onError: (_) => emit(const ReportError('Failed to load reports')),
+          onError: (error, stackTrace) {
+            debugPrint('🔥 REPORT STREAM ERROR: $error');
+            debugPrint('STACK: $stackTrace');
+            emit(ReportError('Failed to load reports: $error'));
+          },
         );
   }
+
+  void watchAllReports() {
+  emit(const ReportLoading());
+  _reportSubscription?.cancel();
+
+  _reportSubscription = _repository
+      .watchAllReports()
+      .listen(
+        (reports) => _emitFiltered(reports),
+        onError: (error, stackTrace) {
+          debugPrint('🔥 REPORT STREAM ERROR ALL: $error');
+          debugPrint('STACK: $stackTrace');
+          emit(ReportError('Failed to load reports: $error'));
+        },
+      );
+}
 
   // Filters
 

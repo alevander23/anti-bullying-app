@@ -30,6 +30,7 @@ abstract class AdminRepository {
 
   // Reports
   Stream<List<Report>> watchReportsForSchool(String schoolId);
+  Stream<List<Report>> watchAllReports();
   Future<Either<Failure, List<Report>>> getFilteredReports({
     required String schoolId,
     ReportStatus? status,
