@@ -4,7 +4,7 @@ import 'package:staff_webapp/di.dart';
 import 'package:staff_webapp/domain/use_cases/create_user_use_case.dart';
 import 'package:staff_webapp/presentation/bloc/create_user_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/create_user_state.dart';
-import 'package:staff_webapp/presentation/pages/login_page.dart';
+import 'package:staff_webapp/presentation/pages/accounts/login_page.dart';
 
 class CreateUserPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();

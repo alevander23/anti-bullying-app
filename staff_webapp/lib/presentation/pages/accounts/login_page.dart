@@ -5,7 +5,8 @@ import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'package:staff_webapp/main.dart';
 import 'package:staff_webapp/presentation/bloc/login_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/login_state.dart';
-import 'package:staff_webapp/presentation/pages/create_user_page.dart';
+import 'package:staff_webapp/presentation/pages/accounts/create_user_page.dart';
+import 'package:staff_webapp/presentation/pages/dashboard/dashboard_page.dart';
 import 'package:staff_webapp/presentation/pages/waiting_page.dart';
 
 class LoginPage extends StatelessWidget {
@@ -56,7 +57,7 @@ class LoginPage extends StatelessWidget {
                     listener: (context, state) {
                       if (state.success) {
                         if (state.user!.isAuthorized) {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => DashboardPage()));
                         } else {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => WaitingPage()));
                         }

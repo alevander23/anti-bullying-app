@@ -1,0 +1,249 @@
+// lib/presentation/pages/dashboard/dashboard_page.dart
+//
+// Root of the admin dashboard. Watches the current admin's school assignment
+// and feeds it to the ReportCubit. Super admins see a school selector.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:staff_webapp/domain/entities/admin_entity.dart';
+import 'package:staff_webapp/domain/entities/report_entity.dart';
+import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/auth_state.dart';
+import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/report/report_state.dart';
+import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/school/school_state.dart';
+import 'package:staff_webapp/presentation/widgets/dashboard/report_table.dart';
+import 'package:staff_webapp/presentation/widgets/dashboard/stats_row.dart';
+import 'package:staff_webapp/presentation/widgets/dashboard/filter_bar.dart';
+import 'package:staff_webapp/presentation/widgets/dashboard/report_detail_sheet.dart';
+
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<SchoolCubit>().watchCurrentAdmin();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<SchoolCubit, SchoolState>(
+      listener: (context, state) {
+        // When we know the admin's school, start the report stream
+        if (state is SchoolLoaded && state.admin.schoolId != null) {
+          context.read<ReportCubit>().watchReports(state.admin.schoolId!);
+        }
+        if (state is SchoolActionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: BlocBuilder<SchoolCubit, SchoolState>(
+        builder: (context, schoolState) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF5F7FA),
+            appBar: _buildAppBar(context, schoolState),
+            body: _buildBody(context, schoolState),
+          );
+        },
+      ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, SchoolState schoolState) {
+    String title = 'Admin Dashboard';
+    if (schoolState is SchoolLoaded) {
+      title = schoolState.admin.isSuperAdmin
+          ? 'Super Admin Dashboard'
+          : 'Dashboard';
+    }
+    return AppBar(
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black87,
+      elevation: 0,
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(1),
+        child: Divider(height: 1),
+      ),
+      actions: [
+        // New report badge
+        BlocBuilder<ReportCubit, ReportState>(
+          builder: (context, state) {
+            if (state is ReportLoaded && state.newCount > 0) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Badge(
+                  label: Text('${state.newCount}'),
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout),
+          tooltip: 'Sign out',
+          onPressed: () => context.read<AuthCubit>().signOut(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context, SchoolState schoolState) {
+    if (schoolState is SchoolLoading || schoolState is SchoolInitial) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (schoolState is SchoolError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(schoolState.message, style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    }
+    if (schoolState is! SchoolLoaded) return const SizedBox.shrink();
+
+    final admin = schoolState.admin;
+
+    // Admin with no school assigned yet
+    if (!admin.isSuperAdmin && admin.schoolId == null) {
+      return const Center(
+        child: Text(
+          'You have not been assigned to a school yet.\nPlease contact your super admin.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    return BlocListener<ReportCubit, ReportState>(
+      listener: (context, state) {
+        if (state is ReportActionSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        if (state is ReportActionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      child: BlocBuilder<ReportCubit, ReportState>(
+        builder: (context, reportState) {
+          if (reportState is ReportLoading || reportState is ReportInitial) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (reportState is ReportError) {
+            return Center(child: Text(reportState.message));
+          }
+          if (reportState is! ReportLoaded) return const SizedBox.shrink();
+
+          return _buildDashboardContent(context, admin, reportState);
+        },
+      ),
+    );
+  }
+
+  Widget _buildDashboardContent(
+      BuildContext context, Admin admin, ReportLoaded state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 900;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome + school name
+              Text(
+                'Welcome, ${admin.name}',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Viewing reports in real-time',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 24),
+
+              // Stats cards
+              StatsRow(
+                total: state.totalCount,
+                newCount: state.newCount,
+                flagged: state.flaggedCount,
+                resolved: state.reports
+                    .where((r) => r.status == ReportStatus.resolved)
+                    .length,
+              ),
+              const SizedBox(height: 24),
+
+              // Filter bar
+              FilterBar(
+                activeStatus: state.activeStatusFilter,
+                activePriority: state.activePriorityFilter,
+                activeFlagged: state.activeFlaggedFilter,
+                hasActiveFilters: state.hasActiveFilters,
+                onStatusChanged: (s) =>
+                    context.read<ReportCubit>().setStatusFilter(s),
+                onPriorityChanged: (p) =>
+                    context.read<ReportCubit>().setPriorityFilter(p),
+                onFlaggedChanged: (f) =>
+                    context.read<ReportCubit>().setFlaggedFilter(f),
+                onSearchChanged: (q) =>
+                    context.read<ReportCubit>().setSearchQuery(q),
+                onClearFilters: () =>
+                    context.read<ReportCubit>().clearFilters(),
+              ),
+              const SizedBox(height: 16),
+
+              // Reports table
+              ReportTable(
+                reports: state.reports,
+                onReportTap: (report) => _showReportDetail(context, report, admin),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showReportDetail(
+      BuildContext context, Report report, Admin admin) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => BlocProvider.value(
+        value: context.read<ReportCubit>(),
+        child: ReportDetailSheet(report: report, admin: admin),
+      ),
+    );
+  }
+}

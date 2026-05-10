@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,12 +10,16 @@ import 'package:staff_webapp/data/data_sources/auth_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/auth_remote_data_source_impl.dart';
 import 'package:staff_webapp/data/data_sources/user_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/staff_remote_data_source.dart';
+import 'package:staff_webapp/data/data_sources/admin_remote_data_source.dart';
 import 'package:staff_webapp/data/repository_implementations/auth_repository_impl.dart';
 import 'package:staff_webapp/data/repository_implementations/user_repository_impl.dart';
 import 'data/repository_implementations/ticket_repository_impl.dart';
 
+import 'package:staff_webapp/data/repository_implementations/admin_repository_impl.dart';
+
 import 'package:staff_webapp/domain/repository_contracts/auth_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/user_repository.dart';
+import 'package:staff_webapp/domain/repository_contracts/admin_repository.dart';
 import 'domain/repository_contracts/ticket_repository.dart';
 
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
@@ -27,6 +32,8 @@ import 'domain/use_cases/resolve_ticket_use_case.dart';
 import 'domain/use_cases/get_ticket_by_id_use_case.dart';
 
 import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -43,6 +50,10 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<FirebaseDatabase>(
     FirebaseDatabase.instanceFor(app: firebaseApp),
   );
+  getIt.registerSingleton<FirebaseFirestore>(
+    FirebaseFirestore.instanceFor(app: firebaseApp),
+  );
+
   getIt.registerSingleton<GoogleSignIn>(GoogleSignIn());
   getIt.registerSingleton<TicketRemoteDataSource>(
     TicketRemoteDataSourceImpl(getIt<FirebaseFunctions>()),
@@ -59,6 +70,12 @@ Future<void> setupDependencies() async {
       googleSignIn: getIt<GoogleSignIn>(),
     ),
   );
+  getIt.registerSingleton<AdminRemoteDataSource>(
+    AdminRemoteDataSource(
+      firestore: getIt<FirebaseFirestore>(),
+      auth: getIt<FirebaseAuth>(),
+    ),
+  );
 
   // Repositories
   getIt.registerSingleton<TicketRepository>(
@@ -72,6 +89,9 @@ Future<void> setupDependencies() async {
       remoteDataSource: getIt<AuthRemoteDataSource>(),
       firebaseAuth: getIt<FirebaseAuth>(),
     ),
+  );
+  getIt.registerSingleton<AdminRepository>(
+    AdminRepositoryImpl(getIt<AdminRemoteDataSource>()),
   );
 
   // Use cases
@@ -100,7 +120,7 @@ Future<void> setupDependencies() async {
     GetCurrentUserUseCase(getIt<AuthRepository>()),
   );
 
-  // Cubit
+  // Cubits
   getIt.registerSingleton<AuthCubit>(
     AuthCubit(
       googleUseCase: getIt<SignInWithGoogle>(),
@@ -109,5 +129,11 @@ Future<void> setupDependencies() async {
       getCurrentUserUseCase: getIt<GetCurrentUserUseCase>(),
       authRepository: getIt<AuthRepository>(),
     ),
+  );
+  getIt.registerFactory<ReportCubit>(
+    () => ReportCubit(getIt<AdminRepository>()),
+  );
+  getIt.registerFactory<SchoolCubit>(
+    () => SchoolCubit(getIt<AdminRepository>()),
   );
 }
