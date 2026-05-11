@@ -1,6 +1,7 @@
 // lib/presentation/bloc/report/report_cubit.dart
 
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
@@ -29,7 +30,7 @@ class ReportCubit extends Cubit<ReportState> {
 
   // Pagination state
   List<Report> _loadedReports = [];
-  DateTime? _lastTime;
+  DocumentSnapshot? _lastDocument;
   bool _hasMore = true;
   bool _isLoadingPage = false;
 
@@ -104,11 +105,21 @@ class ReportCubit extends Cubit<ReportState> {
         await _repository.updateReportStatus(reportId, status, adminUid);
     result.fold(
       (f) => emit(ReportActionError(f.message)),
-      (_) => emit(const ReportActionSuccess('Status updated')),
+      (_) {
+        // Update the report in memory — no server re-fetch
+        _updateLocalReport(reportId, (r) => r.copyWith(
+          status: status,
+          reviewedBy: adminUid,
+          resolvedBy: status == ReportStatus.resolved ? adminUid : r.resolvedBy,
+          closedAt: status == ReportStatus.resolved ? DateTime.now() : r.closedAt,
+          updatedAt: DateTime.now(),
+        ));
+        // Adjust stat counters locally based on old vs new status
+        _adjustStatsForStatusChange(reportId, status);
+        emit(const ReportActionSuccess('Status updated'));
+        _emitCurrent();
+      },
     );
-    // Refresh stats and visible list after a status change
-    await _loadStats();
-    _resetAndLoad();
   }
 
   Future<void> toggleFlag(String reportId, bool current) async {
@@ -116,9 +127,18 @@ class ReportCubit extends Cubit<ReportState> {
         await _repository.toggleReportFlag(reportId, !current);
     result.fold(
       (f) => emit(ReportActionError(f.message)),
-      (_) => emit(const ReportActionSuccess('Flag updated')),
+      (_) {
+        // Flip the flag in memory — no server re-fetch
+        _updateLocalReport(reportId, (r) => r.copyWith(isFlagged: !current));
+        if (!current) {
+          _statFlagged++;
+        } else {
+          _statFlagged = (_statFlagged - 1).clamp(0, _statFlagged);
+        }
+        emit(const ReportActionSuccess('Flag updated'));
+        _emitCurrent();
+      },
     );
-    await _loadStats();
   }
 
   Future<void> addNotes(
@@ -127,15 +147,55 @@ class ReportCubit extends Cubit<ReportState> {
         await _repository.addReportNotes(reportId, notes, adminUid);
     result.fold(
       (f) => emit(ReportActionError(f.message)),
-      (_) => emit(const ReportActionSuccess('Notes saved')),
+      (_) {
+        // Update notes in memory — no server re-fetch
+        _updateLocalReport(reportId, (r) => r.copyWith(
+          notes: notes,
+          reviewedBy: adminUid,
+          updatedAt: DateTime.now(),
+        ));
+        emit(const ReportActionSuccess('Notes saved'));
+        _emitCurrent();
+      },
     );
+  }
+
+  // Mutates the matching report in _loadedReports via a transform function
+  void _updateLocalReport(String reportId, Report Function(Report) transform) {
+    _loadedReports = _loadedReports.map((r) {
+      return r.id == reportId ? transform(r) : r;
+    }).toList();
+  }
+
+  // Adjusts the stat counters when a status changes, based on the old status
+  // stored in the local list before the update was applied
+  void _adjustStatsForStatusChange(String reportId, ReportStatus newStatus) {
+    final old = _loadedReports.firstWhere(
+      (r) => r.id == reportId,
+      orElse: () => _loadedReports.first,
+    );
+    if (old.status == newStatus) return;
+
+    // Decrement old bucket
+    if (old.status == ReportStatus.newReport) {
+      _statNew = (_statNew - 1).clamp(0, _statNew);
+    } else if (old.status == ReportStatus.resolved) {
+      _statResolved = (_statResolved - 1).clamp(0, _statResolved);
+    }
+
+    // Increment new bucket
+    if (newStatus == ReportStatus.newReport) {
+      _statNew++;
+    } else if (newStatus == ReportStatus.resolved) {
+      _statResolved++;
+    }
   }
 
   // Helpers
 
   Future<void> _reset() async {
     _loadedReports = [];
-    _lastTime = null;
+    _lastDocument = null;
     _hasMore = true;
     _isLoadingPage = false;
     emit(const ReportLoading());
@@ -144,10 +204,9 @@ class ReportCubit extends Cubit<ReportState> {
 
   void _resetAndLoad() {
     _loadedReports = [];
-    _lastTime = null;
+    _lastDocument = null;
     _hasMore = true;
     _isLoadingPage = false;
-    emit(const ReportLoading());
     _fetchPage();
   }
   Future<void> _loadStats() async {
@@ -172,23 +231,21 @@ class ReportCubit extends Cubit<ReportState> {
       statuses: _filterStatuses.toList(),
       priority: _filterPriority,
       isFlagged: _filterFlagged,
-      startAfter: _lastTime,
+      startAfter: _lastDocument,
       pageSize: _pageSize,
     );
 
+    _isLoadingPage = false;
+
     result.fold(
       (f) {
-        _isLoadingPage = false;
         debugPrint('🔥 REPORT PAGE ERROR: ${f.message}');
         emit(ReportError('Failed to load reports: ${f.message}'));
       },
       (page) {
-        debugPrint('📄 PAGE: got ${page.reports.length}, _lastTime=$_lastTime, _hasMore=$_hasMore');
         if (page.reports.length < _pageSize) _hasMore = false;
-        if (page.lastTime != null) _lastTime = page.lastTime;
+        if (page.lastDoc != null) _lastDocument = page.lastDoc;
         _loadedReports = [..._loadedReports, ...page.reports];
-        debugPrint('📄 TOTAL LOADED: ${_loadedReports.length}, _hasMore=$_hasMore, new _lastTime=$_lastTime');
-        _isLoadingPage = false;
         _emitCurrent();
       },
     );

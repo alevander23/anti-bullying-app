@@ -204,7 +204,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome + school name
+              // Welcome + admin name
               Text(
                 'Welcome, ${admin.name}',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),

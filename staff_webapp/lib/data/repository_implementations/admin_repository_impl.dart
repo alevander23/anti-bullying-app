@@ -112,12 +112,12 @@ class AdminRepositoryImpl implements AdminRepository {
       _run(() => _dataSource.getReportStats(schoolId));
 
   @override
-  Future<Either<Failure, ({List<Report> reports, DateTime? lastTime})>> getReportPage({
+  Future<Either<Failure, ({List<Report> reports, DocumentSnapshot? lastDoc})>> getReportPage({
     required String? schoolId,
     required List<ReportStatus> statuses,
     ReportPriority? priority,
     bool? isFlagged,
-    DateTime? startAfter,
+    DocumentSnapshot? startAfter,
     int pageSize = 20,
   }) =>
       _run(() async {
@@ -129,7 +129,7 @@ class AdminRepositoryImpl implements AdminRepository {
           startAfter: startAfter,
           pageSize: pageSize,
         );
-        return (reports: result.models as List<Report>, lastTime: result.lastTime);
+        return (reports: result.models as List<Report>, lastDoc: result.lastDoc);
       });
 
   @override
