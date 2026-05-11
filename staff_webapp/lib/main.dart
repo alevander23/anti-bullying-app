@@ -9,7 +9,7 @@ import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 import 'package:staff_webapp/presentation/pages/dashboard/dashboard_page.dart';
 import 'package:staff_webapp/presentation/pages/splash_page.dart';
-import 'package:staff_webapp/presentation/pages/accounts/sso_login_page.dart';
+import 'package:staff_webapp/presentation/pages/accounts/SSO_login_page.dart';
 import 'firebase_options.dart';
 import 'di.dart';
 
