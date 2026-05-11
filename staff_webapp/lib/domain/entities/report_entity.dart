@@ -15,6 +15,9 @@ class Report {
   final DateTime updatedAt;
   final String? reviewedBy;
   final String? notes;
+  final DateTime? closedAt;
+  final String? resolvedBy;
+  final String? deviceIdentifier;
 
   const Report({
     required this.id,
@@ -29,6 +32,9 @@ class Report {
     required this.updatedAt,
     this.reviewedBy,
     this.notes,
+    this.closedAt,
+    this.resolvedBy,
+    this.deviceIdentifier,
   });
 
   bool get isNew        => status == ReportStatus.newReport;
@@ -41,6 +47,9 @@ class Report {
     String? reviewedBy,
     String? notes,
     DateTime? updatedAt,
+    DateTime? closedAt,
+    String? resolvedBy,
+    String? deviceIdentifier,
   }) {
     return Report(
       id: id,
@@ -55,6 +64,9 @@ class Report {
       updatedAt: updatedAt ?? this.updatedAt,
       reviewedBy: reviewedBy ?? this.reviewedBy,
       notes: notes ?? this.notes,
+      closedAt: closedAt ?? this.closedAt,
+      resolvedBy: resolvedBy ?? this.resolvedBy,
+      deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
     );
   }
 }

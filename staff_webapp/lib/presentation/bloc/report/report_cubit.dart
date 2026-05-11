@@ -1,6 +1,7 @@
 // lib/presentation/bloc/report/report_cubit.dart
 
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
@@ -8,79 +9,92 @@ import 'package:staff_webapp/domain/entities/report_entity.dart';
 import 'package:staff_webapp/domain/repository_contracts/admin_repository.dart';
 import 'report_state.dart';
 
+// Default statuses shown on load — resolved is hidden unless the user selects it
+const List<ReportStatus> _kDefaultStatuses = [
+  ReportStatus.newReport,
+  ReportStatus.reviewed,
+  ReportStatus.escalated,
+];
+
 class ReportCubit extends Cubit<ReportState> {
   final AdminRepository _repository;
-  StreamSubscription<List<Report>>? _reportSubscription;
 
-  // Active filter state
-  ReportStatus? _filterStatus;
+  // The school/null context for this session (null = super admin sees all)
+  String? _schoolId;
+
+  // Active filter state — multi-status selection persists until explicitly cleared
+  Set<ReportStatus> _filterStatuses = Set.from(_kDefaultStatuses);
   ReportPriority? _filterPriority;
   bool? _filterFlagged;
   String _searchQuery = '';
+
+  // Pagination state
+  List<Report> _loadedReports = [];
+  DocumentSnapshot? _lastDocument;
+  bool _hasMore = true;
+  bool _isLoadingPage = false;
+
+  // Stats are loaded independently of the report list
+  int _statTotal = 0;
+  int _statNew = 0;
+  int _statFlagged = 0;
+  int _statResolved = 0;
+
+  static const int _pageSize = 20;
 
   ReportCubit(this._repository) : super(const ReportInitial());
 
   // Start listening to reports for a school
 
-  void watchReports(String schoolId) {
-    emit(const ReportLoading());
-    _reportSubscription?.cancel();
-    _reportSubscription = _repository
-        .watchReportsForSchool(schoolId)
-        .listen(
-          (reports) => _emitFiltered(reports),
-          onError: (error, stackTrace) {
-            debugPrint('🔥 REPORT STREAM ERROR: $error');
-            debugPrint('STACK: $stackTrace');
-            emit(ReportError('Failed to load reports: $error'));
-          },
-        );
+  Future<void> loadReports(String schoolId) async {
+    _schoolId = schoolId;
+    await _reset();
   }
 
-  void watchAllReports() {
-  emit(const ReportLoading());
-  _reportSubscription?.cancel();
-
-  _reportSubscription = _repository
-      .watchAllReports()
-      .listen(
-        (reports) => _emitFiltered(reports),
-        onError: (error, stackTrace) {
-          debugPrint('🔥 REPORT STREAM ERROR ALL: $error');
-          debugPrint('STACK: $stackTrace');
-          emit(ReportError('Failed to load reports: $error'));
-        },
-      );
-}
+  // Feature 4: Super admin passes null to see all reports across every school
+  Future<void> loadAllReports() async {
+    _schoolId = null;
+    await _reset();
+  }
 
   // Filters
 
-  void setStatusFilter(ReportStatus? status) {
-    _filterStatus = status;
-    _refreshFiltered();
+  void toggleStatusFilter(ReportStatus status) {
+    if (_filterStatuses.contains(status)) {
+      _filterStatuses = Set.from(_filterStatuses)..remove(status);
+    } else {
+      _filterStatuses = Set.from(_filterStatuses)..add(status);
+    }
+    _resetAndLoad();
   }
 
   void setPriorityFilter(ReportPriority? priority) {
     _filterPriority = priority;
-    _refreshFiltered();
+    _resetAndLoad();
   }
 
   void setFlaggedFilter(bool? flagged) {
     _filterFlagged = flagged;
-    _refreshFiltered();
+    _resetAndLoad();
   }
 
   void setSearchQuery(String query) {
     _searchQuery = query.toLowerCase();
-    _refreshFiltered();
+    _emitCurrent();
   }
 
   void clearFilters() {
-    _filterStatus = null;
+    _filterStatuses = Set.from(_kDefaultStatuses);
     _filterPriority = null;
     _filterFlagged = null;
     _searchQuery = '';
-    _refreshFiltered();
+    _resetAndLoad();
+  }
+
+  // Load the next page when the user scrolls to the bottom
+  Future<void> loadNextPage() async {
+    if (_isLoadingPage || !_hasMore) return;
+    await _fetchPage();
   }
 
   // Report actions
@@ -93,6 +107,9 @@ class ReportCubit extends Cubit<ReportState> {
       (f) => emit(ReportActionError(f.message)),
       (_) => emit(const ReportActionSuccess('Status updated')),
     );
+    // Refresh stats and visible list after a status change
+    await _loadStats();
+    _resetAndLoad();
   }
 
   Future<void> toggleFlag(String reportId, bool current) async {
@@ -102,6 +119,7 @@ class ReportCubit extends Cubit<ReportState> {
       (f) => emit(ReportActionError(f.message)),
       (_) => emit(const ReportActionSuccess('Flag updated')),
     );
+    await _loadStats();
   }
 
   Future<void> addNotes(
@@ -116,44 +134,89 @@ class ReportCubit extends Cubit<ReportState> {
 
   // Helpers
 
-  List<Report>? _allReports;
-
-  void _emitFiltered(List<Report> reports) {
-    _allReports = reports;
-    _emitWithFilters(reports);
+  Future<void> _reset() async {
+    _loadedReports = [];
+    _lastDocument = null;
+    _hasMore = true;
+    _isLoadingPage = false;
+    emit(const ReportLoading());
+    await Future.wait([_loadStats(), _fetchPage()]);
   }
 
-  void _refreshFiltered() {
-    if (_allReports != null) _emitWithFilters(_allReports!);
+  void _resetAndLoad() {
+    _loadedReports = [];
+    _lastDocument = null;
+    _hasMore = true;
+    _isLoadingPage = false;
+    _fetchPage();
+  }
+  Future<void> _loadStats() async {
+    final result = await _repository.getReportStats(_schoolId);
+    result.fold(
+      (f) => debugPrint('🔥 STATS ERROR: ${f.message}'),
+      (stats) {
+        _statTotal = stats['total'] ?? 0;
+        _statNew = stats['new'] ?? 0;
+        _statFlagged = stats['flagged'] ?? 0;
+        _statResolved = stats['resolved'] ?? 0;
+      },
+    );
   }
 
-  void _emitWithFilters(List<Report> reports) {
-    var filtered = reports.where((r) {
-      if (_filterStatus != null && r.status != _filterStatus) return false;
-      if (_filterPriority != null && r.priority != _filterPriority) return false;
-      if (_filterFlagged == true && !r.isFlagged) return false;
-      if (_searchQuery.isNotEmpty) {
-        return r.title.toLowerCase().contains(_searchQuery) ||
-            r.description.toLowerCase().contains(_searchQuery);
-      }
-      return true;
-    }).toList();
+  Future<void> _fetchPage() async {
+    if (_isLoadingPage || !_hasMore) return;
+    _isLoadingPage = true;
+
+    final result = await _repository.getReportPage(
+      schoolId: _schoolId,
+      statuses: _filterStatuses.toList(),
+      priority: _filterPriority,
+      isFlagged: _filterFlagged,
+      startAfter: _lastDocument,
+      pageSize: _pageSize,
+    );
+
+    _isLoadingPage = false;
+
+    result.fold(
+      (f) {
+        debugPrint('🔥 REPORT PAGE ERROR: ${f.message}');
+        emit(ReportError('Failed to load reports: ${f.message}'));
+      },
+      (page) {
+        if (page.reports.length < _pageSize) _hasMore = false;
+        if (page.lastDoc != null) _lastDocument = page.lastDoc;
+        _loadedReports = [..._loadedReports, ...page.reports];
+        _emitCurrent();
+      },
+    );
+  }
+
+  void _emitCurrent() {
+    // Apply client-side search filter on top of server-paginated results
+    final filtered = _searchQuery.isEmpty
+        ? _loadedReports
+        : _loadedReports.where((r) {
+            return r.title.toLowerCase().contains(_searchQuery) ||
+                r.description.toLowerCase().contains(_searchQuery);
+          }).toList();
 
     emit(ReportLoaded(
       reports: filtered,
-      totalCount: reports.length,
-      newCount: reports.where((r) => r.isNew).length,
-      flaggedCount: reports.where((r) => r.isFlagged).length,
-      activeStatusFilter: _filterStatus,
+      totalCount: _statTotal,
+      newCount: _statNew,
+      flaggedCount: _statFlagged,
+      resolvedCount: _statResolved,
+      activeStatusFilters: _filterStatuses,
       activePriorityFilter: _filterPriority,
       activeFlaggedFilter: _filterFlagged,
       searchQuery: _searchQuery,
+      hasMore: _hasMore,
     ));
   }
 
   @override
   Future<void> close() {
-    _reportSubscription?.cancel();
     return super.close();
   }
 }

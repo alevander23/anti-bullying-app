@@ -110,6 +110,70 @@ class AdminRemoteDataSource {
             snapshot.docs.map((d) => ReportModel.fromFirestore(d)).toList());
   }
 
+  Future<Map<String, int>> getReportStats(String? schoolId) async {
+    Query baseQuery = schoolId != null
+        ? _reports.where('schoolId', isEqualTo: schoolId)
+        : _reports;
+
+    final results = await Future.wait([
+      baseQuery.count().get(),
+      baseQuery.where('status', isEqualTo: FirestoreConstants.statusNew).count().get(),
+      baseQuery.where('isFlagged', isEqualTo: true).count().get(),
+      baseQuery.where('status', isEqualTo: FirestoreConstants.statusResolved).count().get(),
+    ]);
+
+    return {
+      'total': results[0].count ?? 0,
+      'new': results[1].count ?? 0,
+      'flagged': results[2].count ?? 0,
+      'resolved': results[3].count ?? 0,
+    };
+  }
+
+  Future<({List<ReportModel> models, DocumentSnapshot? lastDoc})> getReportPage({
+    required String? schoolId,
+    required List<ReportStatus> statuses,
+    ReportPriority? priority,
+    bool? isFlagged,
+    DocumentSnapshot? startAfter,
+    int pageSize = 20,
+  }) async {
+    Query query = schoolId != null
+        ? _reports.where('schoolId', isEqualTo: schoolId)
+        : _reports;
+
+    if (statuses.isNotEmpty) {
+      final statusStrings = statuses.map(_statusString).toList();
+      query = query.where('status', whereIn: statusStrings);
+    }
+
+    if (priority != null) {
+      query = query.where(
+        'priority',
+        isEqualTo: priority == ReportPriority.high
+            ? FirestoreConstants.priorityHigh
+            : FirestoreConstants.priorityNormal,
+      );
+    }
+
+    if (isFlagged != null) {
+      query = query.where('isFlagged', isEqualTo: isFlagged);
+    }
+
+    query = query.orderBy('submittedAt', descending: true).limit(pageSize);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snap = await query.get();
+
+    return (
+      models: snap.docs.map((d) => ReportModel.fromFirestore(d)).toList(),
+      lastDoc: snap.docs.isNotEmpty ? snap.docs.last : null,
+    );
+  }
+
   Future<List<ReportModel>> getFilteredReports({
     required String schoolId,
     ReportStatus? status,

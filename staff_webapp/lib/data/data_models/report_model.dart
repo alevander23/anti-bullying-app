@@ -16,6 +16,9 @@ class ReportModel extends Report {
     required super.updatedAt,
     super.reviewedBy,
     super.notes,
+    super.closedAt,
+    super.resolvedBy,
+    super.deviceIdentifier,
   });
 
   factory ReportModel.fromFirestore(DocumentSnapshot doc) {
@@ -35,6 +38,9 @@ class ReportModel extends Report {
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       reviewedBy: data['reviewedBy'] as String?,
       notes: data['notes'] as String?,
+      closedAt: (data['closedAt'] as Timestamp?)?.toDate(),
+      resolvedBy: data['resolvedBy'] as String?,
+      deviceIdentifier: data['deviceIdentifier'] as String?,
     );
   }
 
@@ -52,6 +58,9 @@ class ReportModel extends Report {
     'updatedAt': FieldValue.serverTimestamp(),
     'reviewedBy': reviewedBy,
     'notes': notes,
+    'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
+    'resolvedBy': resolvedBy,
+    'deviceIdentifier': deviceIdentifier,
   };
 
   // Update map — only fields that can change after creation
@@ -61,6 +70,8 @@ class ReportModel extends Report {
     bool? isFlagged,
     String? reviewedBy,
     String? notes,
+    DateTime? closedAt,
+    String? resolvedBy,
   }) => {
     if (status != null)   'status': _statusToString(status),
     if (priority != null) 'priority': priority == ReportPriority.high
@@ -69,6 +80,8 @@ class ReportModel extends Report {
     if (isFlagged != null) 'isFlagged': isFlagged,
     if (reviewedBy != null) 'reviewedBy': reviewedBy,
     if (notes != null) 'notes': notes,
+    if (closedAt != null) 'closedAt': Timestamp.fromDate(closedAt),
+    if (resolvedBy != null) 'resolvedBy': resolvedBy,
     'updatedAt': FieldValue.serverTimestamp(),
   };
 

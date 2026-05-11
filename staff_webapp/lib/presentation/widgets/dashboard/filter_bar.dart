@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
 
 class FilterBar extends StatefulWidget {
-  final ReportStatus? activeStatus;
+  final Set<ReportStatus> activeStatusFilters;
   final ReportPriority? activePriority;
   final bool? activeFlagged;
   final bool hasActiveFilters;
-  final ValueChanged<ReportStatus?> onStatusChanged;
+  final ValueChanged<ReportStatus> onStatusToggled;
   final ValueChanged<ReportPriority?> onPriorityChanged;
   final ValueChanged<bool?> onFlaggedChanged;
   final ValueChanged<String> onSearchChanged;
@@ -14,11 +14,11 @@ class FilterBar extends StatefulWidget {
 
   const FilterBar({
     super.key,
-    this.activeStatus,
+    required this.activeStatusFilters,
     this.activePriority,
     this.activeFlagged,
     required this.hasActiveFilters,
-    required this.onStatusChanged,
+    required this.onStatusToggled,
     required this.onPriorityChanged,
     required this.onFlaggedChanged,
     required this.onSearchChanged,
@@ -84,14 +84,13 @@ class _FilterBarState extends State<FilterBar> {
                     style: TextStyle(fontWeight: FontWeight.w500)),
                 const SizedBox(width: 8),
 
-                // Status chips
+                // Status chips — multi-select, persist until toggled off
                 ...ReportStatus.values.map((s) => Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: FilterChip(
                         label: Text(_statusLabel(s)),
-                        selected: widget.activeStatus == s,
-                        onSelected: (_) => widget.onStatusChanged(
-                            widget.activeStatus == s ? null : s),
+                        selected: widget.activeStatusFilters.contains(s),
+                        onSelected: (_) => widget.onStatusToggled(s),
                         selectedColor:
                             _statusColor(s).withOpacity(0.2),
                       ),

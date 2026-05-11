@@ -108,6 +108,31 @@ class AdminRepositoryImpl implements AdminRepository {
       _dataSource.watchAllReports();
 
   @override
+  Future<Either<Failure, Map<String, int>>> getReportStats(String? schoolId) =>
+      _run(() => _dataSource.getReportStats(schoolId));
+
+  @override
+  Future<Either<Failure, ({List<Report> reports, DocumentSnapshot? lastDoc})>> getReportPage({
+    required String? schoolId,
+    required List<ReportStatus> statuses,
+    ReportPriority? priority,
+    bool? isFlagged,
+    DocumentSnapshot? startAfter,
+    int pageSize = 20,
+  }) =>
+      _run(() async {
+        final result = await _dataSource.getReportPage(
+          schoolId: schoolId,
+          statuses: statuses,
+          priority: priority,
+          isFlagged: isFlagged,
+          startAfter: startAfter,
+          pageSize: pageSize,
+        );
+        return (reports: result.models as List<Report>, lastDoc: result.lastDoc);
+      });
+
+  @override
   Future<Either<Failure, List<Report>>> getFilteredReports({
     required String schoolId,
     ReportStatus? status,
@@ -135,7 +160,12 @@ class AdminRepositoryImpl implements AdminRepository {
           String reportId, ReportStatus status, String reviewerUid) =>
       _run(() => _dataSource.updateReport(
             reportId,
-            ReportModel.toUpdateMap(status: status, reviewedBy: reviewerUid),
+            ReportModel.toUpdateMap(
+              status: status,
+              reviewedBy: reviewerUid,
+              resolvedBy: status == ReportStatus.resolved ? reviewerUid : null,
+              closedAt: status == ReportStatus.resolved ? DateTime.now() : null,
+            ),
           ));
 
   @override

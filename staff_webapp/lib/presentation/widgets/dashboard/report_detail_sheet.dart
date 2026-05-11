@@ -105,6 +105,18 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
                 _Chip(
                     label: 'Submitted ${_formatDate(report.submittedAt)}',
                     color: Colors.grey),
+                if (report.resolvedBy != null)
+                  _Chip(
+                      label: 'Resolved by ${report.resolvedBy}',
+                      color: Colors.green),
+                if (report.closedAt != null)
+                  _Chip(
+                      label: 'Closed ${_formatDate(report.closedAt!)}',
+                      color: Colors.teal),
+                if (report.deviceIdentifier != null)
+                  _Chip(
+                      label: 'Device: ${report.deviceIdentifier}',
+                      color: Colors.indigo),
               ],
             ),
             const SizedBox(height: 20),

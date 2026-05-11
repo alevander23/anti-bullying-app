@@ -37,8 +37,13 @@ class _DashboardPageState extends State<DashboardPage> {
     return BlocListener<SchoolCubit, SchoolState>(
       listener: (context, state) {
         // When we know the admin's school, start the report stream
-        if (state is SchoolLoaded && state.admin.schoolId != null) {
-          context.read<ReportCubit>().watchReports(state.admin.schoolId!);
+        if (state is SchoolLoaded) {
+          if (state.admin.isSuperAdmin) {
+            // Feature 4: super admin sees all reports regardless of schoolId
+            context.read<ReportCubit>().loadAllReports();
+          } else if (state.admin.schoolId != null) {
+            context.read<ReportCubit>().loadReports(state.admin.schoolId!);
+          }
         }
         if (state is SchoolActionError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -194,20 +199,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 total: state.totalCount,
                 newCount: state.newCount,
                 flagged: state.flaggedCount,
-                resolved: state.reports
-                    .where((r) => r.status == ReportStatus.resolved)
-                    .length,
+                resolved: state.resolvedCount,
               ),
               const SizedBox(height: 24),
 
               // Filter bar
               FilterBar(
-                activeStatus: state.activeStatusFilter,
+                activeStatusFilters: state.activeStatusFilters,
                 activePriority: state.activePriorityFilter,
                 activeFlagged: state.activeFlaggedFilter,
                 hasActiveFilters: state.hasActiveFilters,
-                onStatusChanged: (s) =>
-                    context.read<ReportCubit>().setStatusFilter(s),
+                onStatusToggled: (s) =>
+                    context.read<ReportCubit>().toggleStatusFilter(s),
                 onPriorityChanged: (p) =>
                     context.read<ReportCubit>().setPriorityFilter(p),
                 onFlaggedChanged: (f) =>
@@ -222,7 +225,9 @@ class _DashboardPageState extends State<DashboardPage> {
               // Reports table
               ReportTable(
                 reports: state.reports,
+                hasMore: state.hasMore,
                 onReportTap: (report) => _showReportDetail(context, report, admin),
+                onLoadMore: () => context.read<ReportCubit>().loadNextPage(),
               ),
             ],
           ),

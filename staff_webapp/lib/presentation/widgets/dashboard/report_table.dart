@@ -3,12 +3,16 @@ import 'package:staff_webapp/domain/entities/report_entity.dart';
 
 class ReportTable extends StatelessWidget {
   final List<Report> reports;
+  final bool hasMore;
   final ValueChanged<Report> onReportTap;
+  final VoidCallback onLoadMore;
 
   const ReportTable({
     super.key,
     required this.reports,
+    required this.hasMore,
     required this.onReportTap,
+    required this.onLoadMore,
   });
 
   @override
@@ -73,6 +77,9 @@ class ReportTable extends StatelessWidget {
               itemBuilder: (context, i) =>
                   _ReportRow(report: reports[i], onTap: onReportTap),
             ),
+            // Load more trigger row
+            if (hasMore)
+              _LoadMoreRow(onLoadMore: onLoadMore),
           ],
         ),
       ),
@@ -169,6 +176,31 @@ class _ReportRow extends StatelessWidget {
 
   String _formatDate(DateTime d) =>
       '${d.day}/${d.month}/${d.year}';
+}
+
+class _LoadMoreRow extends StatefulWidget {
+  final VoidCallback onLoadMore;
+  const _LoadMoreRow({required this.onLoadMore});
+
+  @override
+  State<_LoadMoreRow> createState() => _LoadMoreRowState();
+}
+
+class _LoadMoreRowState extends State<_LoadMoreRow> {
+  @override
+  void initState() {
+    super.initState();
+    // Trigger load automatically when this widget becomes visible
+    WidgetsBinding.instance.addPostFrameCallback((_) => widget.onLoadMore());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 16),
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
 }
 
 class _StatusBadge extends StatelessWidget {

@@ -19,24 +19,27 @@ class ReportLoaded extends ReportState {
   final int totalCount;
   final int newCount;
   final int flaggedCount;
-  final ReportStatus? activeStatusFilter;
+  final int resolvedCount;
+  final Set<ReportStatus> activeStatusFilters;
   final ReportPriority? activePriorityFilter;
   final bool? activeFlaggedFilter;
   final String searchQuery;
+  final bool hasMore;
 
   const ReportLoaded({
     required this.reports,
     required this.totalCount,
     required this.newCount,
     required this.flaggedCount,
-    this.activeStatusFilter,
+    required this.resolvedCount,
+    required this.activeStatusFilters,
     this.activePriorityFilter,
     this.activeFlaggedFilter,
     this.searchQuery = '',
+    this.hasMore = false,
   });
 
   bool get hasActiveFilters =>
-      activeStatusFilter != null ||
       activePriorityFilter != null ||
       activeFlaggedFilter != null ||
       searchQuery.isNotEmpty;
