@@ -1,7 +1,6 @@
 // lib/presentation/bloc/report/report_cubit.dart
 
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
@@ -30,7 +29,7 @@ class ReportCubit extends Cubit<ReportState> {
 
   // Pagination state
   List<Report> _loadedReports = [];
-  DocumentSnapshot? _lastDocument;
+  DateTime? _lastTime;
   bool _hasMore = true;
   bool _isLoadingPage = false;
 
@@ -136,7 +135,7 @@ class ReportCubit extends Cubit<ReportState> {
 
   Future<void> _reset() async {
     _loadedReports = [];
-    _lastDocument = null;
+    _lastTime = null;
     _hasMore = true;
     _isLoadingPage = false;
     emit(const ReportLoading());
@@ -145,9 +144,10 @@ class ReportCubit extends Cubit<ReportState> {
 
   void _resetAndLoad() {
     _loadedReports = [];
-    _lastDocument = null;
+    _lastTime = null;
     _hasMore = true;
     _isLoadingPage = false;
+    emit(const ReportLoading());
     _fetchPage();
   }
   Future<void> _loadStats() async {
@@ -172,21 +172,23 @@ class ReportCubit extends Cubit<ReportState> {
       statuses: _filterStatuses.toList(),
       priority: _filterPriority,
       isFlagged: _filterFlagged,
-      startAfter: _lastDocument,
+      startAfter: _lastTime,
       pageSize: _pageSize,
     );
 
-    _isLoadingPage = false;
-
     result.fold(
       (f) {
+        _isLoadingPage = false;
         debugPrint('🔥 REPORT PAGE ERROR: ${f.message}');
         emit(ReportError('Failed to load reports: ${f.message}'));
       },
       (page) {
+        debugPrint('📄 PAGE: got ${page.reports.length}, _lastTime=$_lastTime, _hasMore=$_hasMore');
         if (page.reports.length < _pageSize) _hasMore = false;
-        if (page.lastDoc != null) _lastDocument = page.lastDoc;
+        if (page.lastTime != null) _lastTime = page.lastTime;
         _loadedReports = [..._loadedReports, ...page.reports];
+        debugPrint('📄 TOTAL LOADED: ${_loadedReports.length}, _hasMore=$_hasMore, new _lastTime=$_lastTime');
+        _isLoadingPage = false;
         _emitCurrent();
       },
     );

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:staff_webapp/core/error/failures.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
@@ -33,12 +32,12 @@ abstract class AdminRepository {
   Stream<List<Report>> watchReportsForSchool(String schoolId);
   Stream<List<Report>> watchAllReports();
   Future<Either<Failure, Map<String, int>>> getReportStats(String? schoolId);
-  Future<Either<Failure, ({List<Report> reports, DocumentSnapshot? lastDoc})>> getReportPage({
+  Future<Either<Failure, ({List<Report> reports, DateTime? lastTime})>> getReportPage({
     required String? schoolId,
     required List<ReportStatus> statuses,
     ReportPriority? priority,
     bool? isFlagged,
-    DocumentSnapshot? startAfter,
+    DateTime? startAfter,
     int pageSize,
   });
   Future<Either<Failure, List<Report>>> getFilteredReports({

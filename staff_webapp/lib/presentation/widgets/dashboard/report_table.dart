@@ -5,14 +5,12 @@ class ReportTable extends StatelessWidget {
   final List<Report> reports;
   final bool hasMore;
   final ValueChanged<Report> onReportTap;
-  final VoidCallback onLoadMore;
 
   const ReportTable({
     super.key,
     required this.reports,
     required this.hasMore,
     required this.onReportTap,
-    required this.onLoadMore,
   });
 
   @override
@@ -36,6 +34,7 @@ class ReportTable extends StatelessWidget {
         ),
       );
     }
+
 
     return Container(
       decoration: BoxDecoration(
@@ -79,7 +78,7 @@ class ReportTable extends StatelessWidget {
             ),
             // Load more trigger row
             if (hasMore)
-              _LoadMoreRow(onLoadMore: onLoadMore),
+              const _LoadMoreRow(),
           ],
         ),
       ),
@@ -178,21 +177,8 @@ class _ReportRow extends StatelessWidget {
       '${d.day}/${d.month}/${d.year}';
 }
 
-class _LoadMoreRow extends StatefulWidget {
-  final VoidCallback onLoadMore;
-  const _LoadMoreRow({required this.onLoadMore});
-
-  @override
-  State<_LoadMoreRow> createState() => _LoadMoreRowState();
-}
-
-class _LoadMoreRowState extends State<_LoadMoreRow> {
-  @override
-  void initState() {
-    super.initState();
-    // Trigger load automatically when this widget becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) => widget.onLoadMore());
-  }
+class _LoadMoreRow extends StatelessWidget {
+  const _LoadMoreRow();
 
   @override
   Widget build(BuildContext context) {

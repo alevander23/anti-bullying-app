@@ -26,10 +26,26 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     context.read<SchoolCubit>().watchCurrentAdmin();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 300) {
+      context.read<ReportCubit>().loadNextPage();
+    }
   }
 
   @override
@@ -157,6 +173,11 @@ class _DashboardPageState extends State<DashboardPage> {
         }
       },
       child: BlocBuilder<ReportCubit, ReportState>(
+        buildWhen: (previous, current) =>
+            current is ReportLoading ||
+            current is ReportInitial ||
+            current is ReportLoaded ||
+            current is ReportError,
         builder: (context, reportState) {
           if (reportState is ReportLoading || reportState is ReportInitial) {
             return const Center(child: CircularProgressIndicator());
@@ -178,6 +199,7 @@ class _DashboardPageState extends State<DashboardPage> {
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 900;
         return SingleChildScrollView(
+          controller: _scrollController,
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +249,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 reports: state.reports,
                 hasMore: state.hasMore,
                 onReportTap: (report) => _showReportDetail(context, report, admin),
-                onLoadMore: () => context.read<ReportCubit>().loadNextPage(),
               ),
             ],
           ),

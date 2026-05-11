@@ -130,47 +130,59 @@ class AdminRemoteDataSource {
     };
   }
 
-  Future<({List<ReportModel> models, DocumentSnapshot? lastDoc})> getReportPage({
+  Future<({List<ReportModel> models, DateTime? lastTime})> getReportPage({
     required String? schoolId,
     required List<ReportStatus> statuses,
     ReportPriority? priority,
     bool? isFlagged,
-    DocumentSnapshot? startAfter,
+    DateTime? startAfter,
     int pageSize = 20,
   }) async {
-    Query query = schoolId != null
-        ? _reports.where('schoolId', isEqualTo: schoolId)
-        : _reports;
+    // Run one query per status and merge, avoiding whereIn cursor pagination bugs
+    final queriesToRun = statuses.isNotEmpty ? statuses : ReportStatus.values.toList();
 
-    if (statuses.isNotEmpty) {
-      final statusStrings = statuses.map(_statusString).toList();
-      query = query.where('status', whereIn: statusStrings);
-    }
+    final futures = queriesToRun.map((status) async {
+      Query query = schoolId != null
+          ? _reports.where('schoolId', isEqualTo: schoolId)
+          : _reports;
 
-    if (priority != null) {
-      query = query.where(
-        'priority',
-        isEqualTo: priority == ReportPriority.high
-            ? FirestoreConstants.priorityHigh
-            : FirestoreConstants.priorityNormal,
-      );
-    }
+      query = query.where('status', isEqualTo: _statusString(status));
 
-    if (isFlagged != null) {
-      query = query.where('isFlagged', isEqualTo: isFlagged);
-    }
+      if (priority != null) {
+        query = query.where(
+          'priority',
+          isEqualTo: priority == ReportPriority.high
+              ? FirestoreConstants.priorityHigh
+              : FirestoreConstants.priorityNormal,
+        );
+      }
 
-    query = query.orderBy('submittedAt', descending: true).limit(pageSize);
+      if (isFlagged != null) {
+        query = query.where('isFlagged', isEqualTo: isFlagged);
+      }
 
-    if (startAfter != null) {
-      query = query.startAfterDocument(startAfter);
-    }
+      query = query.orderBy('submittedAt', descending: true);
 
-    final snap = await query.get();
+      if (startAfter != null) {
+        query = query.where('submittedAt', isLessThan: Timestamp.fromDate(startAfter));
+      }
+
+      query = query.limit(pageSize);
+
+      final snap = await query.get();
+      return snap.docs.map((d) => ReportModel.fromFirestore(d)).toList();
+    });
+
+    final results = await Future.wait(futures);
+    final merged = results.expand((r) => r).toList();
+
+    // Sort merged results by submittedAt descending and take pageSize
+    merged.sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
+    final page = merged.take(pageSize).toList();
 
     return (
-      models: snap.docs.map((d) => ReportModel.fromFirestore(d)).toList(),
-      lastDoc: snap.docs.isNotEmpty ? snap.docs.last : null,
+      models: page,
+      lastTime: page.isNotEmpty ? page.last.submittedAt : null,
     );
   }
 
