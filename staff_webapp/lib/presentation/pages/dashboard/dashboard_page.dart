@@ -13,10 +13,13 @@ import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_state.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_state.dart';
+import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/report_table.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/stats_row.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/filter_bar.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/report_detail_sheet.dart';
+import 'package:staff_webapp/presentation/pages/groups/groups_page.dart';
+import 'package:get_it/get_it.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -96,6 +99,30 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Divider(height: 1),
       ),
       actions: [
+        // Groups navigation button
+        if (schoolState is SchoolLoaded)
+          BlocBuilder<ReportCubit, ReportState>(
+            builder: (context, reportState) {
+              final reports = reportState is ReportLoaded ? reportState.reports : <Report>[];
+              return TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider(
+                      create: (_) => GetIt.instance<GroupCubit>(),
+                      child: GroupsPage(
+                        admin: (schoolState as SchoolLoaded).admin,
+                        allReports: reports,
+                      ),
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.folder_outlined, size: 18),
+                label: const Text('Groups'),
+                style: TextButton.styleFrom(foregroundColor: Colors.black87),
+              );
+            },
+          ),
         // New report badge
         BlocBuilder<ReportCubit, ReportState>(
           builder: (context, state) {

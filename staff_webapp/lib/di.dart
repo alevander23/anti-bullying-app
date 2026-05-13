@@ -11,15 +11,18 @@ import 'package:staff_webapp/data/data_sources/auth_remote_data_source_impl.dart
 import 'package:staff_webapp/data/data_sources/user_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/staff_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/admin_remote_data_source.dart';
+import 'package:staff_webapp/data/data_sources/group_remote_data_source.dart';
 import 'package:staff_webapp/data/repository_implementations/auth_repository_impl.dart';
 import 'package:staff_webapp/data/repository_implementations/user_repository_impl.dart';
 import 'data/repository_implementations/ticket_repository_impl.dart';
 
 import 'package:staff_webapp/data/repository_implementations/admin_repository_impl.dart';
+import 'package:staff_webapp/data/repository_implementations/group_repository_impl.dart';
 
 import 'package:staff_webapp/domain/repository_contracts/auth_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/user_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/admin_repository.dart';
+import 'package:staff_webapp/domain/repository_contracts/group_repository.dart';
 import 'domain/repository_contracts/ticket_repository.dart';
 
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
@@ -34,6 +37,7 @@ import 'domain/use_cases/get_ticket_by_id_use_case.dart';
 import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -76,6 +80,9 @@ Future<void> setupDependencies() async {
       auth: getIt<FirebaseAuth>(),
     ),
   );
+  getIt.registerSingleton<GroupRemoteDataSource>(
+    GroupRemoteDataSource(firestore: getIt<FirebaseFirestore>()),
+  );
 
   // Repositories
   getIt.registerSingleton<TicketRepository>(
@@ -92,6 +99,9 @@ Future<void> setupDependencies() async {
   );
   getIt.registerSingleton<AdminRepository>(
     AdminRepositoryImpl(getIt<AdminRemoteDataSource>()),
+  );
+  getIt.registerSingleton<GroupRepository>(
+    GroupRepositoryImpl(getIt<GroupRemoteDataSource>()),
   );
 
   // Use cases
@@ -135,5 +145,8 @@ Future<void> setupDependencies() async {
   );
   getIt.registerFactory<SchoolCubit>(
     () => SchoolCubit(getIt<AdminRepository>()),
+  );
+  getIt.registerFactory<GroupCubit>(
+    () => GroupCubit(getIt<GroupRepository>()),
   );
 }

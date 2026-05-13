@@ -3,6 +3,7 @@ class FirestoreConstants {
   static const String schools  = 'schools';
   static const String admins   = 'admins';
   static const String reports  = 'reports';
+  static const String groups   = 'groups';
 
   // Report status values
   static const String statusNew        = 'new';
