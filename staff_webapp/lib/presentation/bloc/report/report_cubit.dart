@@ -120,19 +120,22 @@ class ReportCubit extends Cubit<ReportState> {
   // Report actions
 
   Future<void> updateStatus(
-      String reportId, ReportStatus status, String adminUid) async {
+      String reportId, ReportStatus status, String adminUid, String adminName) async {
     final result =
-        await _repository.updateReportStatus(reportId, status, adminUid);
+        await _repository.updateReportStatus(reportId, status, adminUid, adminName);
     result.fold(
       (f) => emit(ReportActionError(f.message)),
       (_) {
+        final isResolving = status == ReportStatus.resolved;
         // Update the report in memory — no server re-fetch
         _updateLocalReport(reportId, (r) => r.copyWith(
           status: status,
           reviewedBy: adminUid,
-          resolvedBy: status == ReportStatus.resolved ? adminUid : r.resolvedBy,
-          closedAt: status == ReportStatus.resolved ? DateTime.now() : r.closedAt,
+          resolvedBy: isResolving ? adminName : null,
+          closedAt: isResolving ? DateTime.now() : null,
           updatedAt: DateTime.now(),
+          clearResolvedBy: !isResolving,
+          clearClosedAt: !isResolving,
         ));
         // Adjust stat counters locally based on old vs new status
         _adjustStatsForStatusChange(reportId, status);

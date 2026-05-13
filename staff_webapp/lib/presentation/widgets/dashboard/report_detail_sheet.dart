@@ -184,9 +184,10 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
   void _save() {
     final cubit = context.read<ReportCubit>();
     final adminUid = widget.admin.id;
+    final adminName = widget.admin.name;
 
     if (_selectedStatus != widget.report.status) {
-      cubit.updateStatus(widget.report.id, _selectedStatus, adminUid);
+      cubit.updateStatus(widget.report.id, _selectedStatus, adminUid, adminName);
     }
     if (_notesController.text != (widget.report.notes ?? '')) {
       cubit.addNotes(widget.report.id, _notesController.text, adminUid);

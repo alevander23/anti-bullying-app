@@ -161,14 +161,16 @@ class AdminRepositoryImpl implements AdminRepository {
 
   @override
   Future<Either<Failure, void>> updateReportStatus(
-          String reportId, ReportStatus status, String reviewerUid) =>
+          String reportId, ReportStatus status, String reviewerUid, String reviewerName) =>
       _run(() => _dataSource.updateReport(
             reportId,
             ReportModel.toUpdateMap(
               status: status,
               reviewedBy: reviewerUid,
-              resolvedBy: status == ReportStatus.resolved ? reviewerUid : null,
+              resolvedBy: status == ReportStatus.resolved ? reviewerName : null,
               closedAt: status == ReportStatus.resolved ? DateTime.now() : null,
+              clearResolvedBy: status != ReportStatus.resolved,
+              clearClosedAt: status != ReportStatus.resolved,
             ),
           ));
 

@@ -51,7 +51,7 @@ abstract class AdminRepository {
   });
   Future<Either<Failure, List<Report>>> getRecentReports(String schoolId, {int limit});
   Future<Either<Failure, Report?>> getReport(String reportId);
-  Future<Either<Failure, void>> updateReportStatus(String reportId, ReportStatus status, String reviewerUid);
+  Future<Either<Failure, void>> updateReportStatus(String reportId, ReportStatus status, String reviewerUid, String reviewerName);
   Future<Either<Failure, void>> updateReportPriority(String reportId, ReportPriority priority);
   Future<Either<Failure, void>> toggleReportFlag(String reportId, bool isFlagged);
   Future<Either<Failure, void>> addReportNotes(String reportId, String notes, String reviewerUid);

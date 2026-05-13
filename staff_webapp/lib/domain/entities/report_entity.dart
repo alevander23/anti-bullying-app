@@ -53,6 +53,8 @@ class Report {
     DateTime? closedAt,
     String? resolvedBy,
     String? deviceIdentifier,
+    bool clearResolvedBy = false,
+    bool clearClosedAt = false,
   }) {
     return Report(
       id: id,
@@ -67,8 +69,8 @@ class Report {
       updatedAt: updatedAt ?? this.updatedAt,
       reviewedBy: reviewedBy ?? this.reviewedBy,
       notes: notes ?? this.notes,
-      closedAt: closedAt ?? this.closedAt,
-      resolvedBy: resolvedBy ?? this.resolvedBy,
+      closedAt: clearClosedAt ? null : (closedAt ?? this.closedAt),
+      resolvedBy: clearResolvedBy ? null : (resolvedBy ?? this.resolvedBy),
       deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
     );
   }

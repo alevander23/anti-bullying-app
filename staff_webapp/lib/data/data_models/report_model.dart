@@ -72,18 +72,32 @@ class ReportModel extends Report {
     String? notes,
     DateTime? closedAt,
     String? resolvedBy,
-  }) => {
-    if (status != null)   'status': _statusToString(status),
-    if (priority != null) 'priority': priority == ReportPriority.high
+    bool clearResolvedBy = false,
+    bool clearClosedAt = false,
+  }) {
+    final map = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (status != null)    map['status'] = _statusToString(status);
+    if (priority != null)  {map['priority'] = priority == ReportPriority.high
         ? FirestoreConstants.priorityHigh
-        : FirestoreConstants.priorityNormal,
-    if (isFlagged != null) 'isFlagged': isFlagged,
-    if (reviewedBy != null) 'reviewedBy': reviewedBy,
-    if (notes != null) 'notes': notes,
-    if (closedAt != null) 'closedAt': Timestamp.fromDate(closedAt),
-    if (resolvedBy != null) 'resolvedBy': resolvedBy,
-    'updatedAt': FieldValue.serverTimestamp(),
-  };
+        : FirestoreConstants.priorityNormal;
+    }
+    if (isFlagged != null) map['isFlagged'] = isFlagged;
+    if (reviewedBy != null) map['reviewedBy'] = reviewedBy;
+    if (notes != null)     map['notes'] = notes;
+    if (clearClosedAt) {
+      map['closedAt'] = FieldValue.delete();
+    } else if (closedAt != null) {
+      map['closedAt'] = Timestamp.fromDate(closedAt);
+    }
+    if (clearResolvedBy) {
+      map['resolvedBy'] = FieldValue.delete();
+    } else if (resolvedBy != null) {
+      map['resolvedBy'] = resolvedBy;
+    }
+    return map;
+  }
 
   static ReportStatus _parseStatus(String? s) => switch (s) {
     FirestoreConstants.statusReviewed  => ReportStatus.reviewed,
