@@ -4,12 +4,14 @@ import 'package:staff_webapp/domain/entities/report_entity.dart';
 class ReportTable extends StatelessWidget {
   final List<Report> reports;
   final bool hasMore;
+  final ReportSortField sortField;
   final ValueChanged<Report> onReportTap;
 
   const ReportTable({
     super.key,
     required this.reports,
     required this.hasMore,
+    required this.sortField,
     required this.onReportTap,
   });
 
@@ -56,13 +58,21 @@ class ReportTable extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               color: Colors.grey.shade50,
-              child: const Row(
+              child: Row(
                 children: [
-                  Expanded(flex: 3, child: Text('REPORT', style: _headerStyle)),
-                  Expanded(flex: 1, child: Text('CATEGORY', style: _headerStyle)),
-                  Expanded(flex: 1, child: Text('STATUS', style: _headerStyle)),
-                  Expanded(flex: 1, child: Text('DATE', style: _headerStyle)),
-                  SizedBox(width: 48),
+                  const Expanded(flex: 3, child: Text('REPORT', style: _headerStyle)),
+                  const Expanded(flex: 1, child: Text('CATEGORY', style: _headerStyle)),
+                  const Expanded(flex: 1, child: Text('STATUS', style: _headerStyle)),
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      sortField == ReportSortField.updatedAt
+                          ? 'LAST UPDATED'
+                          : 'DATE SUBMITTED',
+                      style: _headerStyle,
+                    ),
+                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -74,7 +84,7 @@ class ReportTable extends StatelessWidget {
               itemCount: reports.length,
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, i) =>
-                  _ReportRow(report: reports[i], onTap: onReportTap),
+                  _ReportRow(report: reports[i], sortField: sortField, onTap: onReportTap),
             ),
             // Load more trigger row
             if (hasMore)
@@ -95,9 +105,10 @@ class ReportTable extends StatelessWidget {
 
 class _ReportRow extends StatelessWidget {
   final Report report;
+  final ReportSortField sortField;
   final ValueChanged<Report> onTap;
 
-  const _ReportRow({required this.report, required this.onTap});
+  const _ReportRow({required this.report, required this.sortField, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +165,9 @@ class _ReportRow extends StatelessWidget {
             Expanded(
               flex: 1,
               child: Text(
-                _formatDate(report.submittedAt),
+                _formatDate(sortField == ReportSortField.updatedAt
+                    ? report.updatedAt
+                    : report.submittedAt),
                 style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),

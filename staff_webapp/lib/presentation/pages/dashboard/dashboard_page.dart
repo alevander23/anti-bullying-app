@@ -231,6 +231,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 activePriority: state.activePriorityFilter,
                 activeFlagged: state.activeFlaggedFilter,
                 hasActiveFilters: state.hasActiveFilters,
+                sortField: state.sortField,
+                sortAscending: state.sortAscending,
                 onStatusToggled: (s) =>
                     context.read<ReportCubit>().toggleStatusFilter(s),
                 onPriorityChanged: (p) =>
@@ -241,6 +243,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     context.read<ReportCubit>().setSearchQuery(q),
                 onClearFilters: () =>
                     context.read<ReportCubit>().clearFilters(),
+                onSortFieldChanged: (f) =>
+                    context.read<ReportCubit>().setSortField(f),
+                onSortDirectionChanged: (asc) =>
+                    context.read<ReportCubit>().setSortAscending(asc),
               ),
               const SizedBox(height: 16),
 
@@ -248,6 +254,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ReportTable(
                 reports: state.reports,
                 hasMore: state.hasMore,
+                sortField: state.sortField,
                 onReportTap: (report) => _showReportDetail(context, report, admin),
               ),
             ],

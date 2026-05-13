@@ -2,6 +2,9 @@ enum ReportStatus { newReport, reviewed, escalated, resolved }
 enum ReportPriority { normal, high }
 enum ReportCategory { bullying, harassment, safety, other }
 
+/// Which Firestore field to sort the report list by.
+enum ReportSortField { updatedAt, submittedAt }
+
 class Report {
   final String id;
   final String schoolId;

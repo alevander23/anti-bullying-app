@@ -40,6 +40,8 @@ abstract class AdminRepository {
     bool? isFlagged,
     DocumentSnapshot? startAfter,
     int pageSize,
+    ReportSortField sortField,
+    bool sortAscending,
   });
   Future<Either<Failure, List<Report>>> getFilteredReports({
     required String schoolId,

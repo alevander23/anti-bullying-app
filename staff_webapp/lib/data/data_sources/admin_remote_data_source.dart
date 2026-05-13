@@ -137,6 +137,8 @@ class AdminRemoteDataSource {
     bool? isFlagged,
     DocumentSnapshot? startAfter,
     int pageSize = 20,
+    ReportSortField sortField = ReportSortField.updatedAt,
+    bool sortAscending = false,
   }) async {
     Query query = schoolId != null
         ? _reports.where('schoolId', isEqualTo: schoolId)
@@ -160,7 +162,12 @@ class AdminRemoteDataSource {
       query = query.where('isFlagged', isEqualTo: isFlagged);
     }
 
-    query = query.orderBy('submittedAt', descending: true).limit(pageSize);
+    final orderByField = sortField == ReportSortField.updatedAt
+        ? 'updatedAt'
+        : 'submittedAt';
+    query = query
+        .orderBy(orderByField, descending: !sortAscending)
+        .limit(pageSize);
 
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);

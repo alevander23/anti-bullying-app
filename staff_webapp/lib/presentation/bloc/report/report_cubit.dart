@@ -28,6 +28,10 @@ class ReportCubit extends Cubit<ReportState> {
   bool? _filterFlagged;
   String _searchQuery = '';
 
+  // Sort state — default: most recent changes first
+  ReportSortField _sortField = ReportSortField.updatedAt;
+  bool _sortAscending = false;
+
   // Pagination state
   List<Report> _loadedReports = [];
   DocumentSnapshot? _lastDocument;
@@ -83,11 +87,27 @@ class ReportCubit extends Cubit<ReportState> {
     _emitCurrent();
   }
 
+  /// Switch between sorting by most-recent-change vs original submission date.
+  void setSortField(ReportSortField field) {
+    if (_sortField == field) return;
+    _sortField = field;
+    _resetAndLoad();
+  }
+
+  /// Toggle ascending / descending for the active sort field.
+  void setSortAscending(bool ascending) {
+    if (_sortAscending == ascending) return;
+    _sortAscending = ascending;
+    _resetAndLoad();
+  }
+
   void clearFilters() {
     _filterStatuses = Set.from(_kDefaultStatuses);
     _filterPriority = null;
     _filterFlagged = null;
     _searchQuery = '';
+    _sortField = ReportSortField.updatedAt;
+    _sortAscending = false;
     _resetAndLoad();
   }
 
@@ -233,6 +253,8 @@ class ReportCubit extends Cubit<ReportState> {
       isFlagged: _filterFlagged,
       startAfter: _lastDocument,
       pageSize: _pageSize,
+      sortField: _sortField,
+      sortAscending: _sortAscending,
     );
 
     _isLoadingPage = false;
@@ -271,6 +293,8 @@ class ReportCubit extends Cubit<ReportState> {
       activeFlaggedFilter: _filterFlagged,
       searchQuery: _searchQuery,
       hasMore: _hasMore,
+      sortField: _sortField,
+      sortAscending: _sortAscending,
     ));
   }
 

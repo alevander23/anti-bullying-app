@@ -119,6 +119,8 @@ class AdminRepositoryImpl implements AdminRepository {
     bool? isFlagged,
     DocumentSnapshot? startAfter,
     int pageSize = 20,
+    ReportSortField sortField = ReportSortField.updatedAt,
+    bool sortAscending = false,
   }) =>
       _run(() async {
         final result = await _dataSource.getReportPage(
@@ -128,6 +130,8 @@ class AdminRepositoryImpl implements AdminRepository {
           isFlagged: isFlagged,
           startAfter: startAfter,
           pageSize: pageSize,
+          sortField: sortField,
+          sortAscending: sortAscending,
         );
         return (reports: result.models as List<Report>, lastDoc: result.lastDoc);
       });

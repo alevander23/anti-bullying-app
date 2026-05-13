@@ -2,6 +2,7 @@
 
 import 'package:staff_webapp/domain/entities/report_entity.dart';
 
+
 abstract class ReportState {
   const ReportState();
 }
@@ -25,6 +26,8 @@ class ReportLoaded extends ReportState {
   final bool? activeFlaggedFilter;
   final String searchQuery;
   final bool hasMore;
+  final ReportSortField sortField;
+  final bool sortAscending;
 
   const ReportLoaded({
     required this.reports,
@@ -37,6 +40,8 @@ class ReportLoaded extends ReportState {
     this.activeFlaggedFilter,
     this.searchQuery = '',
     this.hasMore = false,
+    this.sortField = ReportSortField.updatedAt,
+    this.sortAscending = false,
   });
 
   bool get hasActiveFilters =>
