@@ -26,6 +26,8 @@ class GroupsPage extends StatefulWidget {
 }
 
 class _GroupsPageState extends State<GroupsPage> {
+  String? _loadingGroupId;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +50,7 @@ class _GroupsPageState extends State<GroupsPage> {
           ));
         }
         if (state is GroupActionError) {
+          setState(() => _loadingGroupId = null);
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(state.message),
             backgroundColor: Colors.red,
@@ -55,6 +58,7 @@ class _GroupsPageState extends State<GroupsPage> {
           ));
         }
         if (state is GroupDetailLoaded) {
+          setState(() => _loadingGroupId = null);
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -127,7 +131,11 @@ class _GroupsPageState extends State<GroupsPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (_, i) => _GroupCard(
                     group: groups[i],
-                    onTap: () => context.read<GroupCubit>().loadGroupDetail(groups[i].id),
+                    isLoading: _loadingGroupId == groups[i].id,
+                    onTap: () {
+                      setState(() => _loadingGroupId = groups[i].id);
+                      context.read<GroupCubit>().loadGroupDetail(groups[i].id);
+                    },
                   ),
                 ),
         ),
@@ -296,15 +304,18 @@ class _FilterPill extends StatelessWidget {
 class _GroupCard extends StatelessWidget {
   final IncidentGroup group;
   final VoidCallback onTap;
-  const _GroupCard({required this.group, required this.onTap});
+  final bool isLoading;
+  const _GroupCard({required this.group, required this.onTap, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor: isLoading ? SystemMouseCursors.basic : SystemMouseCursors.click,
       child: GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTap: isLoading ? null : onTap,
+      child: Stack(
+        children: [
+          Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -350,6 +361,24 @@ class _GroupCard extends StatelessWidget {
             ),
           ],
         ),
+          ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       ),
     );
