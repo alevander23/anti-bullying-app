@@ -13,13 +13,11 @@ import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_state.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_state.dart';
-import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/report_table.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/stats_row.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/filter_bar.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/report_detail_sheet.dart';
 import 'package:staff_webapp/presentation/pages/groups/groups_page.dart';
-import 'package:get_it/get_it.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -106,20 +104,14 @@ class _DashboardPageState extends State<DashboardPage> {
               return TextButton.icon(
                 onPressed: () {
                   final reportCubit = context.read<ReportCubit>();
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => MultiBlocProvider(
-                        providers: [
-                          BlocProvider(create: (_) => GetIt.instance<GroupCubit>()),
-                          BlocProvider.value(value: reportCubit),
-                        ],
-                        child: GroupsPage(
-                          admin: (schoolState as SchoolLoaded).admin,
-                          allReports: reports,
-                        ),
-                      ),
-                    ),
+                    '/groups',
+                    arguments: {
+                      'admin': (schoolState as SchoolLoaded).admin,
+                      'allReports': reports,
+                      'reportCubit': reportCubit,
+                    },
                   );
                 },
                 icon: const Icon(Icons.folder_outlined, size: 18),

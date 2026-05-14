@@ -5,11 +5,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/auth_state.dart';
+import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 import 'package:staff_webapp/presentation/pages/dashboard/dashboard_page.dart';
+import 'package:staff_webapp/presentation/pages/groups/groups_page.dart';
 import 'package:staff_webapp/presentation/pages/splash_page.dart';
 import 'package:staff_webapp/presentation/pages/accounts/SSO_login_page.dart';
+import 'package:staff_webapp/domain/entities/admin_entity.dart';
+import 'package:staff_webapp/domain/entities/group_entity.dart';
+import 'package:staff_webapp/domain/entities/report_entity.dart';
+import 'package:staff_webapp/presentation/pages/groups/group_detail_page.dart';
+import 'package:staff_webapp/presentation/pages/groups/create_edit_group_page.dart';
 import 'firebase_options.dart';
 import 'di.dart';
 
@@ -44,6 +51,83 @@ class MyApp extends StatelessWidget {
                 ],
                 child: const DashboardPage(),
               ),
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == '/groups') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final reportCubit = args['reportCubit'] as ReportCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => getIt<GroupCubit>()),
+                  BlocProvider.value(value: reportCubit),
+                ],
+                child: GroupsPage(admin: admin, allReports: allReports),
+              ),
+            );
+          }
+          if (settings.name == '/groups/detail') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final group = args['group'] as IncidentGroup;
+            final timeline = args['timeline'] as List<GroupTimelineEntry>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final groupCubit = args['groupCubit'] as GroupCubit;
+            final reportCubit = args['reportCubit'] as ReportCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: groupCubit),
+                  BlocProvider.value(value: reportCubit),
+                ],
+                child: GroupDetailPage(
+                  group: group,
+                  timeline: timeline,
+                  admin: admin,
+                  allReports: allReports,
+                ),
+              ),
+            );
+          }
+          if (settings.name == '/groups/detail/edit') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final existing = args['existing'] as IncidentGroup;
+            final groupCubit = args['groupCubit'] as GroupCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => BlocProvider.value(
+                value: groupCubit,
+                child: CreateEditGroupPage(
+                  admin: admin,
+                  allReports: allReports,
+                  existing: existing,
+                ),
+              ),
+            );
+          }
+          if (settings.name == '/groups/create') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final groupCubit = args['groupCubit'] as GroupCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => BlocProvider.value(
+                value: groupCubit,
+                child: CreateEditGroupPage(
+                  admin: admin,
+                  allReports: allReports,
+                ),
+              ),
+            );
+          }
+          return null;
         },
       ),
     );

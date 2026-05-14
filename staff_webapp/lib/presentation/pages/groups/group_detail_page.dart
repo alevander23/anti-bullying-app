@@ -123,21 +123,18 @@ class _GroupDetailPageState extends State<GroupDetailPage>
   }
 
   void _openEdit(BuildContext context) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: context.read<GroupCubit>(),
-          child: CreateEditGroupPage(
-            admin: widget.admin,
-            allReports: widget.allReports,
-            existing: _group,
-          ),
-        ),
-      ),
+      '/groups/detail/edit',
+      arguments: {
+        'admin': widget.admin,
+        'allReports': widget.allReports,
+        'existing': _group,
+        'groupCubit': context.read<GroupCubit>(),
+      },
     ).then((_) {
       // Refresh detail after edit
-      context.read<GroupCubit>().loadGroupDetail(_group.id);
+      if (context.mounted) context.read<GroupCubit>().loadGroupDetail(_group.id);
     });
   }
 

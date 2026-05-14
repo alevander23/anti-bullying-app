@@ -8,7 +8,6 @@ import 'package:staff_webapp/domain/entities/report_entity.dart';
 import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/group/group_state.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
-import 'group_detail_page.dart';
 import 'create_edit_group_page.dart';
 
 class GroupsPage extends StatefulWidget {
@@ -59,23 +58,23 @@ class _GroupsPageState extends State<GroupsPage> {
         }
         if (state is GroupDetailLoaded) {
           setState(() => _loadingGroupId = null);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(value: groupCubit),
-                  BlocProvider.value(value: reportCubit),
-                ],
-                child: GroupDetailPage(
-                  group: state.group,
-                  timeline: state.timeline,
-                  admin: widget.admin,
-                  allReports: widget.allReports,
-                ),
-              ),
-            ),
-          );
+          // Only push if GroupsPage is the currently active route.
+          // When detail calls loadGroupDetail to refresh after an edit,
+          // this listener would fire again and push a duplicate page.
+          if (ModalRoute.of(context)?.isCurrent == true) {
+            Navigator.pushNamed(
+              context,
+              '/groups/detail',
+              arguments: {
+                'group': state.group,
+                'timeline': state.timeline,
+                'admin': widget.admin,
+                'allReports': widget.allReports,
+                'groupCubit': groupCubit,
+                'reportCubit': reportCubit,
+              },
+            );
+          }
         }
       },
       buildWhen: (_, s) => s is GroupLoading || s is GroupLoaded || s is GroupError || s is GroupInitial,
@@ -227,17 +226,14 @@ class _GroupsPageState extends State<GroupsPage> {
   }
 
   void _openCreate(BuildContext context) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: context.read<GroupCubit>(),
-          child: CreateEditGroupPage(
-            admin: widget.admin,
-            allReports: widget.allReports,
-          ),
-        ),
-      ),
+      '/groups/create',
+      arguments: {
+        'admin': widget.admin,
+        'allReports': widget.allReports,
+        'groupCubit': context.read<GroupCubit>(),
+      },
     );
   }
 }
