@@ -128,20 +128,6 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-        BlocBuilder<ReportCubit, ReportState>(
-          builder: (context, state) {
-            if (state is ReportLoaded && state.newCount > 0) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Badge(
-                  label: Text('${state.newCount}'),
-                  child: const Icon(Icons.notifications_outlined),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
         IconButton(
           icon: const Icon(Icons.logout),
           tooltip: 'Sign out',
