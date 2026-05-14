@@ -12,15 +12,13 @@ import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'create_edit_group_page.dart';
 
 class GroupDetailPage extends StatefulWidget {
-  final IncidentGroup group;
-  final List<GroupTimelineEntry> timeline;
+  final String groupId;
   final Admin admin;
   final List<Report> allReports;
 
   const GroupDetailPage({
     super.key,
-    required this.group,
-    required this.timeline,
+    required this.groupId,
     required this.admin,
     required this.allReports,
   });
@@ -32,15 +30,13 @@ class GroupDetailPage extends StatefulWidget {
 class _GroupDetailPageState extends State<GroupDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
-  late IncidentGroup _group;
-  late List<GroupTimelineEntry> _timeline;
+  IncidentGroup? _group;
+  List<GroupTimelineEntry> _timeline = [];
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
-    _group = widget.group;
-    _timeline = widget.timeline;
   }
 
   @override
@@ -53,7 +49,7 @@ class _GroupDetailPageState extends State<GroupDetailPage>
   Widget build(BuildContext context) {
     return BlocConsumer<GroupCubit, GroupState>(
       listener: (context, state) {
-        if (state is GroupDetailLoaded && state.group.id == _group.id) {
+        if (state is GroupDetailLoaded && state.group.id == widget.groupId) {
           setState(() {
             _group = state.group;
             _timeline = state.timeline;
@@ -75,10 +71,13 @@ class _GroupDetailPageState extends State<GroupDetailPage>
         }
       },
       builder: (context, _) {
+        final group = _group;
+        // Show skeleton scaffold while data is loading
+        if (group == null) return _buildLoadingScaffold();
         return Scaffold(
           backgroundColor: const Color(0xFFF5F7FA),
           appBar: AppBar(
-            title: Text(_group.title,
+            title: Text(group.title,
                 style: const TextStyle(fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis),
             backgroundColor: Colors.white,
@@ -86,12 +85,12 @@ class _GroupDetailPageState extends State<GroupDetailPage>
             elevation: 0,
             actions: [
               TextButton.icon(
-                onPressed: () => _openEdit(context),
+                onPressed: () => _openEdit(context, group),
                 icon: const Icon(Icons.edit_outlined, size: 16),
                 label: const Text('Edit'),
               ),
               TextButton.icon(
-                onPressed: () => _confirmDelete(context),
+                onPressed: () => _confirmDelete(context, group),
                 icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
                 label: const Text('Delete', style: TextStyle(color: Colors.red)),
               ),
@@ -104,7 +103,7 @@ class _GroupDetailPageState extends State<GroupDetailPage>
               indicatorColor: Colors.black87,
               tabs: [
                 const Tab(text: 'Overview'),
-                Tab(text: 'Reports (${_group.connectedReportIds.length})'),
+                Tab(text: 'Reports (${group.connectedReportIds.length})'),
                 const Tab(text: 'Timeline'),
               ],
             ),
@@ -112,8 +111,8 @@ class _GroupDetailPageState extends State<GroupDetailPage>
           body: TabBarView(
             controller: _tabs,
             children: [
-              _OverviewTab(group: _group, allReports: widget.allReports, admin: widget.admin),
-              _ReportsTab(group: _group, allReports: widget.allReports, admin: widget.admin),
+              _OverviewTab(group: group, allReports: widget.allReports, admin: widget.admin),
+              _ReportsTab(group: group, allReports: widget.allReports, admin: widget.admin),
               _TimelineTab(timeline: _timeline),
             ],
           ),
@@ -122,23 +121,38 @@ class _GroupDetailPageState extends State<GroupDetailPage>
     );
   }
 
-  void _openEdit(BuildContext context) {
+  Widget _buildLoadingScaffold() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1),
+        ),
+      ),
+      body: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  void _openEdit(BuildContext context, IncidentGroup group) {
     Navigator.pushNamed(
       context,
       '/groups/detail/edit',
       arguments: {
         'admin': widget.admin,
         'allReports': widget.allReports,
-        'existing': _group,
+        'existing': group,
         'groupCubit': context.read<GroupCubit>(),
       },
     ).then((_) {
-      // Refresh detail after edit
-      if (context.mounted) context.read<GroupCubit>().loadGroupDetail(_group.id);
+      if (context.mounted) context.read<GroupCubit>().loadGroupDetail(group.id);
     });
   }
 
-  void _confirmDelete(BuildContext context) {
+  void _confirmDelete(BuildContext context, IncidentGroup group) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -152,7 +166,7 @@ class _GroupDetailPageState extends State<GroupDetailPage>
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<GroupCubit>().deleteGroup(_group.id);
+              context.read<GroupCubit>().deleteGroup(group.id);
               Navigator.pop(context); // back to list
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),

@@ -31,6 +31,13 @@ class GroupLoaded extends GroupState {
   List<Object?> get props => [groups, statusFilter];
 }
 
+class GroupDetailLoading extends GroupState {
+  final String groupId;
+  const GroupDetailLoading(this.groupId);
+  @override
+  List<Object?> get props => [groupId];
+}
+
 class GroupDetailLoaded extends GroupState {
   final IncidentGroup group;
   final List<GroupTimelineEntry> timeline;

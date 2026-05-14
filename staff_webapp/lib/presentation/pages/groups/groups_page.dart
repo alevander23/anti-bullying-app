@@ -56,18 +56,15 @@ class _GroupsPageState extends State<GroupsPage> {
             behavior: SnackBarBehavior.floating,
           ));
         }
-        if (state is GroupDetailLoaded) {
-          setState(() => _loadingGroupId = null);
-          // Only push if GroupsPage is the currently active route.
-          // When detail calls loadGroupDetail to refresh after an edit,
-          // this listener would fire again and push a duplicate page.
+        if (state is GroupDetailLoading) {
+          // Navigate immediately so the transition is instant.
+          // GroupDetailPage shows a skeleton while the cubit loads.
           if (ModalRoute.of(context)?.isCurrent == true) {
             Navigator.pushNamed(
               context,
               '/groups/detail',
               arguments: {
-                'group': state.group,
-                'timeline': state.timeline,
+                'groupId': state.groupId,
                 'admin': widget.admin,
                 'allReports': widget.allReports,
                 'groupCubit': groupCubit,
@@ -75,6 +72,9 @@ class _GroupsPageState extends State<GroupsPage> {
               },
             );
           }
+        }
+        if (state is GroupDetailLoaded) {
+          setState(() => _loadingGroupId = null);
         }
       },
       buildWhen: (_, s) => s is GroupLoading || s is GroupLoaded || s is GroupError || s is GroupInitial,
@@ -132,7 +132,6 @@ class _GroupsPageState extends State<GroupsPage> {
                     group: groups[i],
                     isLoading: _loadingGroupId == groups[i].id,
                     onTap: () {
-                      setState(() => _loadingGroupId = groups[i].id);
                       context.read<GroupCubit>().loadGroupDetail(groups[i].id);
                     },
                   ),

@@ -71,8 +71,7 @@ class MyApp extends StatelessWidget {
           }
           if (settings.name == '/groups/detail') {
             final args = settings.arguments as Map<String, dynamic>;
-            final group = args['group'] as IncidentGroup;
-            final timeline = args['timeline'] as List<GroupTimelineEntry>;
+            final groupId = args['groupId'] as String;
             final admin = args['admin'] as Admin;
             final allReports = args['allReports'] as List<Report>;
             final groupCubit = args['groupCubit'] as GroupCubit;
@@ -85,8 +84,7 @@ class MyApp extends StatelessWidget {
                   BlocProvider.value(value: reportCubit),
                 ],
                 child: GroupDetailPage(
-                  group: group,
-                  timeline: timeline,
+                  groupId: groupId,
                   admin: admin,
                   allReports: allReports,
                 ),

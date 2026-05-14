@@ -30,8 +30,7 @@ class GroupCubit extends Cubit<GroupState> {
   }
 
   Future<void> loadGroupDetail(String groupId) async {
-    final current = state;
-    // Keep list available while loading detail
+    emit(GroupDetailLoading(groupId));
     final groupResult = await _repository.getGroup(groupId);
     final timelineResult = await _repository.getTimeline(groupId);
 
