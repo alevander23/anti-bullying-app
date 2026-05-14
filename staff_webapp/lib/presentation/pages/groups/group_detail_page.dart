@@ -176,13 +176,14 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reportCubit = context.read<ReportCubit>();
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 700;
           final main = _buildMain(context);
-          final side = _buildSide(context);
+          final side = _buildSide(context, reportCubit);
           if (isWide) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +245,7 @@ class _OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSide(BuildContext context) {
+  Widget _buildSide(BuildContext context, ReportCubit reportCubit) {
     final linked = allReports.where((r) => group.connectedReportIds.contains(r.id)).toList();
     return Column(
       children: [
@@ -253,7 +254,7 @@ class _OverviewTab extends StatelessWidget {
           child: Column(
             children: linked.isEmpty
                 ? [Text('No reports linked.', style: TextStyle(color: Colors.grey.shade500, fontSize: 13))]
-                : linked.map((r) => _LinkedReportTile(report: r, admin: admin)).toList(),
+                : linked.map((r) => _LinkedReportTile(report: r, admin: admin, reportCubit: reportCubit)).toList(),
           ),
         ),
         const SizedBox(height: 14),
@@ -286,6 +287,7 @@ class _ReportsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reportCubit = context.read<ReportCubit>();
     final linked = allReports.where((r) => group.connectedReportIds.contains(r.id)).toList();
 
     if (linked.isEmpty) {
@@ -299,7 +301,7 @@ class _ReportsTab extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       itemCount: linked.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _FullReportTile(report: linked[i], admin: admin),
+      itemBuilder: (_, i) => _FullReportTile(report: linked[i], admin: admin, reportCubit: reportCubit),
     );
   }
 }
@@ -462,12 +464,24 @@ class _PersonRow extends StatelessWidget {
 class _LinkedReportTile extends StatelessWidget {
   final Report report;
   final Admin admin;
-  const _LinkedReportTile({required this.report, required this.admin});
+  final ReportCubit reportCubit;
+  const _LinkedReportTile({required this.report, required this.admin, required this.reportCubit});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _open(context),
+      onTap: () => showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) => BlocProvider.value(
+          value: reportCubit,
+          child: ReportDetailSheet(report: report, admin: admin),
+        ),
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -506,21 +520,6 @@ class _LinkedReportTile extends StatelessWidget {
     );
   }
 
-  void _open(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => BlocProvider.value(
-        value: context.read<ReportCubit>(),
-        child: ReportDetailSheet(report: report, admin: admin),
-      ),
-    );
-  }
-
   String _categoryLabel(ReportCategory c) => switch (c) {
     ReportCategory.bullying   => 'Bullying',
     ReportCategory.harassment => 'Harassment',
@@ -532,7 +531,8 @@ class _LinkedReportTile extends StatelessWidget {
 class _FullReportTile extends StatelessWidget {
   final Report report;
   final Admin admin;
-  const _FullReportTile({required this.report, required this.admin});
+  final ReportCubit reportCubit;
+  const _FullReportTile({required this.report, required this.admin, required this.reportCubit});
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +545,7 @@ class _FullReportTile extends StatelessWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         builder: (_) => BlocProvider.value(
-          value: context.read<ReportCubit>(),
+          value: reportCubit,
           child: ReportDetailSheet(report: report, admin: admin),
         ),
       ),

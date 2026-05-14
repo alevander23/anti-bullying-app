@@ -58,7 +58,6 @@ class _DashboardPageState extends State<DashboardPage> {
         // When we know the admin's school, start the report stream
         if (state is SchoolLoaded) {
           if (state.admin.isSuperAdmin) {
-            // Feature 4: super admin sees all reports regardless of schoolId
             context.read<ReportCubit>().loadAllReports();
           } else if (state.admin.schoolId != null) {
             context.read<ReportCubit>().loadReports(state.admin.schoolId!);
@@ -105,25 +104,30 @@ class _DashboardPageState extends State<DashboardPage> {
             builder: (context, reportState) {
               final reports = reportState is ReportLoaded ? reportState.reports : <Report>[];
               return TextButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider(
-                      create: (_) => GetIt.instance<GroupCubit>(),
-                      child: GroupsPage(
-                        admin: (schoolState as SchoolLoaded).admin,
-                        allReports: reports,
+                onPressed: () {
+                  final reportCubit = context.read<ReportCubit>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MultiBlocProvider(
+                        providers: [
+                          BlocProvider(create: (_) => GetIt.instance<GroupCubit>()),
+                          BlocProvider.value(value: reportCubit),
+                        ],
+                        child: GroupsPage(
+                          admin: (schoolState as SchoolLoaded).admin,
+                          allReports: reports,
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
                 icon: const Icon(Icons.folder_outlined, size: 18),
                 label: const Text('Groups'),
                 style: TextButton.styleFrom(foregroundColor: Colors.black87),
               );
             },
           ),
-        // New report badge
         BlocBuilder<ReportCubit, ReportState>(
           builder: (context, state) {
             if (state is ReportLoaded && state.newCount > 0) {
