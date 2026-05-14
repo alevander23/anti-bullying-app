@@ -300,7 +300,9 @@ class _GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -348,6 +350,7 @@ class _GroupCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
