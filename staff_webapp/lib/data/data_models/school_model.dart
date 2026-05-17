@@ -8,6 +8,8 @@ class SchoolModel extends School {
     required super.address,
     required super.isActive,
     required super.createdAt,
+    super.resolvedReportRetentionDays,
+    super.lastCleanupDate,
   });
 
   factory SchoolModel.fromFirestore(DocumentSnapshot doc) {
@@ -18,6 +20,8 @@ class SchoolModel extends School {
       address: data['address'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      resolvedReportRetentionDays: data['resolvedReportRetentionDays'] as int?,
+      lastCleanupDate: (data['lastCleanupDate'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -26,5 +30,7 @@ class SchoolModel extends School {
     'address': address,
     'isActive': isActive,
     'createdAt': FieldValue.serverTimestamp(),
+    if (resolvedReportRetentionDays != null)
+      'resolvedReportRetentionDays': resolvedReportRetentionDays,
   };
 }

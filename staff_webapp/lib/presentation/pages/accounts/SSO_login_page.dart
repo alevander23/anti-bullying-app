@@ -10,7 +10,6 @@ class SSOLoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthCubit, AuthState>(
-        // Side effects (navigation, toasts)
         listener: (context, state) {
           if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -22,11 +21,17 @@ class SSOLoginPage extends StatelessWidget {
             );
           }
           if (state is AuthSuccess || state is AuthSessionRestored) {
-            // Replace the login page so Back doesn't return to it
-            Navigator.of(context).pushReplacementNamed('/home');
+            final user = state is AuthSuccess
+                ? state.user
+                : (state as AuthSessionRestored).user;
+
+            if (user.isAuthorized) {
+              Navigator.of(context).pushReplacementNamed('/home');
+            } else {
+              Navigator.of(context).pushReplacementNamed('/waiting');
+            }
           }
         },
-        // Build 
         builder: (context, state) {
           final isLoading = state is AuthLoading;
           final cubit = context.read<AuthCubit>();
@@ -59,22 +64,15 @@ class SSOLoginPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 48),
-
-                    // Microsoft button
                     _SSOButton(
                       label: 'Continue with Microsoft',
-                      // Using Icons.window as a stand-in; swap for an SVG asset:
-                      //   Image.asset('assets/images/ms_logo.svg', width: 20)
                       icon: Icons.window_rounded,
                       backgroundColor: const Color(0xFF2F2F2F),
                       foregroundColor: Colors.white,
                       isLoading: isLoading,
                       onPressed: cubit.signInWithMicrosoft,
                     ),
-
                     const SizedBox(height: 12),
-
-                    // Google button
                     _SSOButton(
                       label: 'Continue with Google',
                       icon: Icons.g_mobiledata_rounded,
@@ -84,10 +82,7 @@ class SSOLoginPage extends StatelessWidget {
                       onPressed: cubit.signInWithGoogle,
                       border: Border.all(color: Colors.grey.shade300),
                     ),
-
                     const SizedBox(height: 32),
-
-                    // Loading indicator
                     if (isLoading)
                       const Center(
                         child: Padding(
@@ -109,8 +104,6 @@ class SSOLoginPage extends StatelessWidget {
     );
   }
 }
-
-// Reusable SSO button
 
 class _SSOButton extends StatelessWidget {
   final String label;

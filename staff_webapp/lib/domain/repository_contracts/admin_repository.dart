@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:staff_webapp/core/error/failures.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
+import 'package:staff_webapp/domain/entities/pending_admin_entity.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
 import 'package:staff_webapp/domain/entities/school_entity.dart';
 
@@ -12,9 +13,10 @@ abstract class AdminRepository {
 
   // Schools
   Future<Either<Failure, List<School>>> getAllSchools();
+  Future<Either<Failure, List<School>>> getAllSchoolsIncludingInactive();
   Future<Either<Failure, School?>> getSchool(String schoolId);
   Future<Either<Failure, String>> createSchool({required String name, required String address});
-  Future<Either<Failure, void>> updateSchool(String schoolId, {String? name, String? address, bool? isActive});
+  Future<Either<Failure, void>> updateSchool(String schoolId, {String? name, String? address, bool? isActive, int? resolvedReportRetentionDays});
 
   // Admin management
   Future<Either<Failure, List<Admin>>> getAllAdmins();
@@ -26,8 +28,31 @@ abstract class AdminRepository {
     required AdminRole role,
     String? schoolId,
   });
+  Future<Either<Failure, void>> inviteAdmin({
+    required String email,
+    required String name,
+    required AdminRole role,
+    String? schoolId,
+  });
   Future<Either<Failure, void>> assignAdminToSchool(String adminUid, String schoolId);
   Future<Either<Failure, void>> deactivateAdmin(String adminUid);
+
+  // Pending admins (SSO approval flow)
+  Stream<List<PendingAdmin>> watchPendingAdmins();
+  Future<Either<Failure, void>> approvePendingAdmin({
+    required String uid,
+    required String email,
+    required String name,
+    required AdminRole role,
+    required String schoolId,
+  });
+  Future<Either<Failure, void>> rejectPendingAdmin(String uid);
+
+  // Report cleanup
+  Future<Either<Failure, void>> cleanupOldReports({
+    required String schoolId,
+    required int retentionDays,
+  });
 
   // Reports
   Stream<List<Report>> watchReportsForSchool(String schoolId);

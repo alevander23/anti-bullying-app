@@ -12,6 +12,7 @@ import 'package:staff_webapp/presentation/pages/dashboard/dashboard_page.dart';
 import 'package:staff_webapp/presentation/pages/groups/groups_page.dart';
 import 'package:staff_webapp/presentation/pages/splash_page.dart';
 import 'package:staff_webapp/presentation/pages/accounts/SSO_login_page.dart';
+import 'package:staff_webapp/presentation/pages/waiting_page.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
 import 'package:staff_webapp/domain/entities/group_entity.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
@@ -40,10 +41,13 @@ class MyApp extends StatelessWidget {
           colorSchemeSeed: Colors.indigo,
           useMaterial3: true,
         ),
-        // SplashPage checks for an existing session then routes accordingly.
         home: const SplashPage(),
         routes: {
           '/login': (_) => const SSOLoginPage(),
+          '/waiting': (_) => BlocProvider.value(
+                value: getIt<AuthCubit>(),
+                child: const WaitingPage(),
+              ),
           '/home': (_) => MultiBlocProvider(
                 providers: [
                   BlocProvider(create: (_) => getIt<SchoolCubit>()),

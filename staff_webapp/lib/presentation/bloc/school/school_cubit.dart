@@ -12,11 +12,12 @@ class SchoolCubit extends Cubit<SchoolState> {
 
   SchoolCubit(this._repository) : super(const SchoolInitial());
 
-  // Watch the current admin's document — picks up school reassignments live
+  /// Watch the current admin's document — picks up school reassignments live.
+  /// Also triggers a daily cleanup of old resolved reports when the school loads.
   void watchCurrentAdmin() {
     _adminSubscription?.cancel();
     _adminSubscription = _repository.watchCurrentAdmin().listen(
-      (admin) {
+      (admin) async {
         if (admin == null) {
           emit(const SchoolError('Admin profile not found'));
           return;
@@ -26,8 +27,44 @@ class SchoolCubit extends Cubit<SchoolState> {
           return;
         }
         emit(SchoolLoaded(admin: admin));
+
+        // Trigger daily cleanup for regular admins with a school assigned
+        if (!admin.isSuperAdmin && admin.schoolId != null) {
+          _maybeRunDailyCleanup(admin.schoolId!);
+        }
       },
       onError: (_) => emit(const SchoolError('Failed to load admin profile')),
+    );
+  }
+
+  /// Checks if a cleanup has already run today; if not, fetches school settings
+  /// and runs the cleanup if a retention period is configured.
+  Future<void> _maybeRunDailyCleanup(String schoolId) async {
+    final schoolResult = await _repository.getSchool(schoolId);
+    schoolResult.fold(
+      (_) => null, // silently ignore errors — cleanup is best-effort
+      (school) async {
+        if (school == null) return;
+        if (school.resolvedReportRetentionDays == null) return;
+
+        // Check if we've already cleaned up today
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        if (school.lastCleanupDate != null) {
+          final lastCleanup = DateTime(
+            school.lastCleanupDate!.year,
+            school.lastCleanupDate!.month,
+            school.lastCleanupDate!.day,
+          );
+          if (!lastCleanup.isBefore(today)) return; // already ran today
+        }
+
+        // Run the cleanup silently in the background
+        await _repository.cleanupOldReports(
+          schoolId: schoolId,
+          retentionDays: school.resolvedReportRetentionDays!,
+        );
+      },
     );
   }
 

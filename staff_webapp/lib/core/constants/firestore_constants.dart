@@ -1,9 +1,10 @@
 class FirestoreConstants {
   // Collections
-  static const String schools  = 'schools';
-  static const String admins   = 'admins';
-  static const String reports  = 'reports';
-  static const String groups   = 'groups';
+  static const String schools        = 'schools';
+  static const String admins         = 'admins';
+  static const String reports        = 'reports';
+  static const String groups         = 'groups';
+  static const String pendingAdmins  = 'pendingAdmins';
 
   // Report status values
   static const String statusNew        = 'new';
@@ -24,4 +25,8 @@ class FirestoreConstants {
   static const String categoryHarassment = 'harassment';
   static const String categorySafety     = 'safety';
   static const String categoryOther      = 'other';
+
+  // School settings fields
+  static const String resolvedReportRetentionDays = 'resolvedReportRetentionDays';
+  static const String lastCleanupDate             = 'lastCleanupDate';
 }

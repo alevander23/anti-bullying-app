@@ -38,6 +38,7 @@ import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/settings/settings_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -72,12 +73,14 @@ Future<void> setupDependencies() async {
     AuthRemoteDataSourceImpl(
       firebaseAuth: getIt<FirebaseAuth>(),
       googleSignIn: getIt<GoogleSignIn>(),
+      firestore: getIt<FirebaseFirestore>(),
     ),
   );
   getIt.registerSingleton<AdminRemoteDataSource>(
     AdminRemoteDataSource(
       firestore: getIt<FirebaseFirestore>(),
       auth: getIt<FirebaseAuth>(),
+      functions: getIt<FirebaseFunctions>(),
     ),
   );
   getIt.registerSingleton<GroupRemoteDataSource>(
@@ -148,5 +151,8 @@ Future<void> setupDependencies() async {
   );
   getIt.registerFactory<GroupCubit>(
     () => GroupCubit(getIt<GroupRepository>()),
+  );
+  getIt.registerFactory<SettingsCubit>(
+    () => SettingsCubit(getIt<AdminRepository>()),
   );
 }

@@ -1,24 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:staff_webapp/core/constants/firestore_constants.dart';
 import 'package:staff_webapp/data/data_models/admin_model.dart';
 import 'package:staff_webapp/data/data_models/report_model.dart';
 import 'package:staff_webapp/data/data_models/school_model.dart';
+import 'package:staff_webapp/data/data_models/pending_admin_model.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
 
 class AdminRemoteDataSource {
   final FirebaseFirestore _firestore;
   final fb.FirebaseAuth _auth;
+  final FirebaseFunctions _functions;
 
   AdminRemoteDataSource({
     required FirebaseFirestore firestore,
     required fb.FirebaseAuth auth,
+    required FirebaseFunctions functions,
   })  : _firestore = firestore,
-        _auth = auth;
+        _auth = auth,
+        _functions = functions;
 
   // Shortcuts
-
   CollectionReference get _schools =>
       _firestore.collection(FirestoreConstants.schools);
 
@@ -31,7 +35,6 @@ class AdminRemoteDataSource {
   Future<AdminModel?> getCurrentAdmin() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
-
     final doc = await _admins.doc(uid).get();
     if (!doc.exists) return null;
     return AdminModel.fromFirestore(doc);
@@ -40,7 +43,6 @@ class AdminRemoteDataSource {
   Stream<AdminModel?> watchCurrentAdmin() {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return Stream.value(null);
-
     return _admins.doc(uid).snapshots().map((doc) {
       if (!doc.exists) return null;
       return AdminModel.fromFirestore(doc);
@@ -52,7 +54,11 @@ class AdminRemoteDataSource {
         .where('isActive', isEqualTo: true)
         .orderBy('name')
         .get();
+    return snap.docs.map((d) => SchoolModel.fromFirestore(d)).toList();
+  }
 
+  Future<List<SchoolModel>> getAllSchoolsIncludingInactive() async {
+    final snap = await _schools.orderBy('name').get();
     return snap.docs.map((d) => SchoolModel.fromFirestore(d)).toList();
   }
 
@@ -67,8 +73,14 @@ class AdminRemoteDataSource {
     return ref.id;
   }
 
-  Future<void> updateSchool(String schoolId, Map<String, dynamic> data) =>
-      _schools.doc(schoolId).update(data);
+  Future<void> updateSchool(String schoolId, Map<String, dynamic> data) {
+    // -1 is a sentinel meaning "remove the retention field entirely" (never delete)
+    if (data.containsKey('resolvedReportRetentionDays') &&
+        data['resolvedReportRetentionDays'] == -1) {
+      data['resolvedReportRetentionDays'] = FieldValue.delete();
+    }
+    return _schools.doc(schoolId).update(data);
+  }
 
   Future<List<AdminModel>> getAllAdmins() async {
     final snap = await _admins.orderBy('name').get();
@@ -80,7 +92,6 @@ class AdminRemoteDataSource {
         .where('schoolId', isEqualTo: schoolId)
         .where('isActive', isEqualTo: true)
         .get();
-
     return snap.docs.map((d) => AdminModel.fromFirestore(d)).toList();
   }
 
@@ -92,6 +103,68 @@ class AdminRemoteDataSource {
 
   Future<void> deactivateAdmin(String adminUid) =>
       _admins.doc(adminUid).update({'isActive': false});
+
+  /// Calls the `inviteAdmin` Cloud Function.
+  /// The function creates (or looks up) the Firebase Auth user, writes their
+  /// admin doc, and triggers a password-reset / welcome email.
+  Future<void> inviteAdmin({
+    required String email,
+    required String name,
+    required AdminRole role,
+    String? schoolId,
+  }) async {
+    final callable = _functions.httpsCallable('inviteAdmin');
+    await callable.call(<String, dynamic>{
+      'email': email,
+      'name': name,
+      'role': role == AdminRole.superAdmin ? FirestoreConstants.roleSuperAdmin : FirestoreConstants.roleAdmin,
+      if (schoolId != null) 'schoolId': schoolId,
+    });
+  }
+
+  /// Deletes resolved reports older than [retentionDays] for a school,
+  /// then updates lastCleanupDate to today.
+  Future<void> cleanupOldReports({
+    required String schoolId,
+    required int retentionDays,
+  }) async {
+    final cutoff = DateTime.now().subtract(Duration(days: retentionDays));
+    final cutoffTs = Timestamp.fromDate(cutoff);
+
+    // Query resolved reports older than the cutoff
+    final snap = await _reports
+        .where('schoolId', isEqualTo: schoolId)
+        .where('status', isEqualTo: FirestoreConstants.statusResolved)
+        .where('updatedAt', isLessThan: cutoffTs)
+        .get();
+
+    if (snap.docs.isNotEmpty) {
+      // Batch delete in groups of 500 (Firestore limit)
+      final batches = <WriteBatch>[];
+      WriteBatch current = _firestore.batch();
+      int count = 0;
+      for (final doc in snap.docs) {
+        current.delete(doc.reference);
+        count++;
+        if (count == 499) {
+          batches.add(current);
+          current = _firestore.batch();
+          count = 0;
+        }
+      }
+      if (count > 0) batches.add(current);
+      for (final batch in batches) {
+        await batch.commit();
+      }
+    }
+
+    // Mark cleanup as done today
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    await _schools.doc(schoolId).update({
+      FirestoreConstants.lastCleanupDate: Timestamp.fromDate(todayOnly),
+    });
+  }
 
   Stream<List<ReportModel>> watchReportsForSchool(String schoolId) {
     return _reports
@@ -148,7 +221,6 @@ class AdminRemoteDataSource {
       final statusStrings = statuses.map(_statusString).toList();
       query = query.where('status', whereIn: statusStrings);
     }
-
     if (priority != null) {
       query = query.where(
         'priority',
@@ -157,24 +229,19 @@ class AdminRemoteDataSource {
             : FirestoreConstants.priorityNormal,
       );
     }
-
     if (isFlagged != null) {
       query = query.where('isFlagged', isEqualTo: isFlagged);
     }
 
-    final orderByField = sortField == ReportSortField.updatedAt
-        ? 'updatedAt'
-        : 'submittedAt';
-    query = query
-        .orderBy(orderByField, descending: !sortAscending)
-        .limit(pageSize);
+    final orderByField =
+        sortField == ReportSortField.updatedAt ? 'updatedAt' : 'submittedAt';
+    query = query.orderBy(orderByField, descending: !sortAscending).limit(pageSize);
 
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
 
     final snap = await query.get();
-
     return (
       models: snap.docs.map((d) => ReportModel.fromFirestore(d)).toList(),
       lastDoc: snap.docs.isNotEmpty ? snap.docs.last : null,
@@ -188,11 +255,9 @@ class AdminRemoteDataSource {
     bool? isFlagged,
   }) async {
     Query query = _reports.where('schoolId', isEqualTo: schoolId);
-
     if (status != null) {
       query = query.where('status', isEqualTo: _statusString(status));
     }
-
     if (priority != null) {
       query = query.where(
         'priority',
@@ -201,15 +266,11 @@ class AdminRemoteDataSource {
             : FirestoreConstants.priorityNormal,
       );
     }
-
     if (isFlagged != null) {
       query = query.where('isFlagged', isEqualTo: isFlagged);
     }
-
     query = query.orderBy('submittedAt', descending: true);
-
     final snap = await query.get();
-
     return snap.docs.map((d) => ReportModel.fromFirestore(d)).toList();
   }
 
@@ -220,7 +281,6 @@ class AdminRemoteDataSource {
         .orderBy('submittedAt', descending: true)
         .limit(limit)
         .get();
-
     return snap.docs.map((d) => ReportModel.fromFirestore(d)).toList();
   }
 
@@ -239,7 +299,6 @@ class AdminRemoteDataSource {
         .where('status', isEqualTo: FirestoreConstants.statusNew)
         .count()
         .get();
-
     return snap.count ?? 0;
   }
 
@@ -249,4 +308,52 @@ class AdminRemoteDataSource {
         ReportStatus.escalated => FirestoreConstants.statusEscalated,
         ReportStatus.resolved => FirestoreConstants.statusResolved,
       };
+
+  // Pending admins
+
+  Stream<List<PendingAdminModel>> watchPendingAdmins() {
+    return _firestore
+        .collection(FirestoreConstants.pendingAdmins)
+        .orderBy('requestedAt', descending: false)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => PendingAdminModel.fromFirestore(d)).toList());
+  }
+
+  /// Approve a pending admin: write their admin doc and delete the pending doc atomically.
+  Future<void> approvePendingAdmin({
+    required String uid,
+    required String email,
+    required String name,
+    required AdminRole role,
+    required String schoolId,
+  }) async {
+    final batch = _firestore.batch();
+
+    batch.set(
+      _admins.doc(uid),
+      {
+        'email': email,
+        'name': name,
+        'role': role == AdminRole.superAdmin
+            ? FirestoreConstants.roleSuperAdmin
+            : FirestoreConstants.roleAdmin,
+        'schoolId': schoolId,
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    );
+
+    batch.delete(
+      _firestore.collection(FirestoreConstants.pendingAdmins).doc(uid),
+    );
+
+    await batch.commit();
+  }
+
+  Future<void> rejectPendingAdmin(String uid) =>
+      _firestore
+          .collection(FirestoreConstants.pendingAdmins)
+          .doc(uid)
+          .delete();
 }

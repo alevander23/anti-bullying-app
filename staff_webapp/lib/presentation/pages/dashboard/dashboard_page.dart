@@ -18,6 +18,9 @@ import 'package:staff_webapp/presentation/widgets/dashboard/stats_row.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/filter_bar.dart';
 import 'package:staff_webapp/presentation/widgets/dashboard/report_detail_sheet.dart';
 import 'package:staff_webapp/presentation/pages/groups/groups_page.dart';
+import 'package:staff_webapp/presentation/bloc/settings/settings_cubit.dart';
+import 'package:staff_webapp/presentation/pages/settings/school_settings_page.dart';
+import 'package:staff_webapp/di.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -125,6 +128,24 @@ class _DashboardPageState extends State<DashboardPage> {
           tooltip: 'Sign out',
           onPressed: () => context.read<AuthCubit>().signOut(),
         ),
+        // Settings button — shown when admin is loaded
+        if (schoolState is SchoolLoaded)
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'School Settings',
+            onPressed: () {
+              final admin = (schoolState as SchoolLoaded).admin;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => getIt<SettingsCubit>(),
+                    child: SchoolSettingsPage(currentAdmin: admin),
+                  ),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
