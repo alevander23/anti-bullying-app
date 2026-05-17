@@ -267,11 +267,13 @@ class AdminRepositoryImpl implements AdminRepository {
     try {
       return Right(await fn());
     } on FirebaseException catch (e) {
+      print('[AdminRepository] FirebaseException: code=${e.code} message=${e.message}');
       if (e.code == 'permission-denied') {
         return Left(const PermissionFailure());
       }
       return Left(FirestoreFailure(e.message ?? 'Firestore error'));
-    } catch (_) {
+    } catch (e) {
+      print('[AdminRepository] Unexpected error: $e');
       return Left(const UnexpectedFailure());
     }
   }

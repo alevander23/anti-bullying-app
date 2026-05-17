@@ -42,6 +42,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   /// Load settings for a super admin — all schools + all admins + pending.
   Future<void> loadForSuperAdmin(String focusSchoolId) async {
     emit(const SettingsLoading());
+    print('[SettingsCubit] loadForSuperAdmin: focusSchoolId=$focusSchoolId');
 
     final schoolResult      = await _repository.getSchool(focusSchoolId);
     final adminsResult      = await _repository.getAdminsForSchool(focusSchoolId);
@@ -49,17 +50,29 @@ class SettingsCubit extends Cubit<SettingsState> {
     final allAdminsResult   = await _repository.getAllAdmins();
 
     School? school;
-    schoolResult.fold((f) => emit(SettingsError(f.message)), (s) => school = s);
+    schoolResult.fold(
+      (f) { print('[SettingsCubit] getSchool error: ${f.message}'); emit(SettingsError(f.message)); },
+      (s) { school = s; print('[SettingsCubit] getSchool: ${s?.name}'); },
+    );
     if (school == null) return;
 
     List<Admin> admins = [];
-    adminsResult.fold((f) => null, (a) => admins = a);
+    adminsResult.fold(
+      (f) => print('[SettingsCubit] getAdminsForSchool error: ${f.message}'),
+      (a) { admins = a; print('[SettingsCubit] loaded ${a.length} admins for school'); },
+    );
 
     List<School> allSchools = [];
-    allSchoolsResult.fold((f) => null, (s) => allSchools = s);
+    allSchoolsResult.fold(
+      (f) => print('[SettingsCubit] getAllSchools error: ${f.message}'),
+      (s) { allSchools = s; print('[SettingsCubit] loaded ${s.length} total schools'); },
+    );
 
     List<Admin> allAdmins = [];
-    allAdminsResult.fold((f) => null, (a) => allAdmins = a);
+    allAdminsResult.fold(
+      (f) => print('[SettingsCubit] getAllAdmins error: ${f.message}'),
+      (a) { allAdmins = a; print('[SettingsCubit] loaded ${a.length} total admins'); },
+    );
 
     emit(SettingsLoaded(
       school: school!,
@@ -80,42 +93,35 @@ class SettingsCubit extends Cubit<SettingsState> {
     final allAdminsResult  = await _repository.getAllAdmins();
 
     List<School> allSchools = [];
-    allSchoolsResult.fold((f) => emit(SettingsError(f.message)), (s) => allSchools = s);
+    String? schoolError;
+    allSchoolsResult.fold(
+      (f) { schoolError = f.message; print('[SettingsCubit] schools error: ${f.message}'); },
+      (s) { allSchools = s; print('[SettingsCubit] loaded ${s.length} schools'); },
+    );
 
     List<Admin> allAdmins = [];
-    allAdminsResult.fold((f) => null, (a) => allAdmins = a);
+    allAdminsResult.fold(
+      (f) => print('[SettingsCubit] admins error: ${f.message}'),
+      (a) { allAdmins = a; print('[SettingsCubit] loaded ${a.length} admins'); },
+    );
 
-    // Use a placeholder school so SettingsLoaded can still be emitted.
-    // The page checks _focusedSchoolId == null and shows the "select a school" prompt.
-    if (allSchools.isEmpty) {
-      // No schools exist yet at all — still show the page so they can create one
-      emit(SettingsLoaded(
-        school: School(
-          id: '',
-          name: '',
-          address: '',
-          isActive: true,
-          createdAt: DateTime.now(),
-        ),
-        admins: [],
-        allSchools: [],
-        allAdmins: allAdmins,
-      ));
-    } else {
-      // Don't auto-focus any school — let the sidebar prompt the user to pick one
-      emit(SettingsLoaded(
-        school: School(
-          id: '',
-          name: '',
-          address: '',
-          isActive: true,
-          createdAt: DateTime.now(),
-        ),
-        admins: [],
-        allSchools: allSchools,
-        allAdmins: allAdmins,
-      ));
+    if (schoolError != null) {
+      emit(SettingsError('Could not load schools: $schoolError'));
+      return;
     }
+
+    emit(SettingsLoaded(
+      school: School(
+        id: '',
+        name: '',
+        address: '',
+        isActive: true,
+        createdAt: DateTime.now(),
+      ),
+      admins: [],
+      allSchools: allSchools,
+      allAdmins: allAdmins,
+    ));
 
     _watchPending();
   }
