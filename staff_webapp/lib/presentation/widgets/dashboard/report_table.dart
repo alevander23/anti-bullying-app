@@ -136,11 +136,19 @@ class _ReportRow extends StatelessWidget {
                     ),
                   Expanded(
                     child: Text(
-                      report.title,
+                      report.bullyNames.isNotEmpty
+                          ? report.bullyNames.join(', ')
+                          : '${report.description.characters.take(30).toString()}...',
                       style: TextStyle(
                         fontWeight: report.isNew
                             ? FontWeight.bold
                             : FontWeight.normal,
+                        color: report.bullyNames.isEmpty
+                            ? Colors.grey
+                            : null,
+                        fontStyle: report.bullyNames.isEmpty
+                            ? FontStyle.italic
+                            : FontStyle.normal,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

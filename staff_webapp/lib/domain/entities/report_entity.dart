@@ -21,6 +21,7 @@ class Report {
   final DateTime? closedAt;
   final String? resolvedBy;
   final String? deviceIdentifier;
+  final List<String> bullyNames;
 
   const Report({
     required this.id,
@@ -38,6 +39,7 @@ class Report {
     this.closedAt,
     this.resolvedBy,
     this.deviceIdentifier,
+    this.bullyNames = const [],
   });
 
   bool get isNew        => status == ReportStatus.newReport;
@@ -53,6 +55,7 @@ class Report {
     DateTime? closedAt,
     String? resolvedBy,
     String? deviceIdentifier,
+    List<String>? bullyNames,
     bool clearResolvedBy = false,
     bool clearClosedAt = false,
   }) {
@@ -72,6 +75,7 @@ class Report {
       closedAt: clearClosedAt ? null : (closedAt ?? this.closedAt),
       resolvedBy: clearResolvedBy ? null : (resolvedBy ?? this.resolvedBy),
       deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
+      bullyNames: bullyNames ?? this.bullyNames,
     );
   }
 }

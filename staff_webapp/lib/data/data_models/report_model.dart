@@ -19,6 +19,7 @@ class ReportModel extends Report {
     super.closedAt,
     super.resolvedBy,
     super.deviceIdentifier,
+    super.bullyNames = const [],
   });
 
   factory ReportModel.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +42,10 @@ class ReportModel extends Report {
       closedAt: (data['closedAt'] as Timestamp?)?.toDate(),
       resolvedBy: data['resolvedBy'] as String?,
       deviceIdentifier: data['deviceIdentifier'] as String?,
+      bullyNames: (data['bullyNames'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
