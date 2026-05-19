@@ -282,7 +282,10 @@ class ReportCubit extends Cubit<ReportState> {
         ? _loadedReports
         : _loadedReports.where((r) {
             return r.title.toLowerCase().contains(_searchQuery) ||
-                r.description.toLowerCase().contains(_searchQuery);
+              r.description.toLowerCase().contains(_searchQuery) ||
+              (r.notes?.toLowerCase().contains(_searchQuery) ?? false) ||
+              r.bullyNames.any((n) => n.toLowerCase().contains(_searchQuery)) ||
+              r.category.name.toLowerCase().contains(_searchQuery);
           }).toList();
 
     emit(ReportLoaded(
