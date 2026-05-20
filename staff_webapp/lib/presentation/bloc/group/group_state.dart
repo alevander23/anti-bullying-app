@@ -2,6 +2,31 @@
 
 import 'package:equatable/equatable.dart';
 import 'package:staff_webapp/domain/entities/group_entity.dart';
+import 'package:staff_webapp/domain/entities/report_entity.dart';
+
+// ── Auto-grouping suggestion ─────────────────────────────────────────────────
+
+/// A cluster of reports that share at least one bully name and fall within
+/// [windowDays] of each other.
+class AutoGroupSuggestion {
+  final String id; // stable key derived from sorted bully names
+  final List<String> bullyNames;
+  final List<Report> reports;
+  final DateTime earliest;
+  final DateTime latest;
+
+  const AutoGroupSuggestion({
+    required this.id,
+    required this.bullyNames,
+    required this.reports,
+    required this.earliest,
+    required this.latest,
+  });
+
+  int get daySpan => latest.difference(earliest).inDays;
+}
+
+// ── States ───────────────────────────────────────────────────────────────────
 
 abstract class GroupState extends Equatable {
   const GroupState();
@@ -20,15 +45,20 @@ class GroupLoading extends GroupState {
 class GroupLoaded extends GroupState {
   final List<IncidentGroup> groups;
   final GroupStatus? statusFilter;
+  final List<AutoGroupSuggestion> suggestions;
 
-  const GroupLoaded({required this.groups, this.statusFilter});
+  const GroupLoaded({
+    required this.groups,
+    this.statusFilter,
+    this.suggestions = const [],
+  });
 
   List<IncidentGroup> get filtered => statusFilter == null
       ? groups
       : groups.where((g) => g.status == statusFilter).toList();
 
   @override
-  List<Object?> get props => [groups, statusFilter];
+  List<Object?> get props => [groups, statusFilter, suggestions];
 }
 
 class GroupDetailLoading extends GroupState {

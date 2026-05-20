@@ -55,6 +55,7 @@ class AdminRepositoryImpl implements AdminRepository {
     String? address,
     bool? isActive,
     int? resolvedReportRetentionDays,
+    int? autoGroupWindowDays,
   }) =>
       _run(() => _dataSource.updateSchool(schoolId, {
             if (name != null) 'name': name,
@@ -62,6 +63,8 @@ class AdminRepositoryImpl implements AdminRepository {
             if (isActive != null) 'isActive': isActive,
             if (resolvedReportRetentionDays != null)
               'resolvedReportRetentionDays': resolvedReportRetentionDays,
+            if (autoGroupWindowDays != null)
+              'autoGroupWindowDays': autoGroupWindowDays,
           }));
 
   @override

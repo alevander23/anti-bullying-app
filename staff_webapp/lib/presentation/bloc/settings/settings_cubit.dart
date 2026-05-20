@@ -156,6 +156,28 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
   }
 
+  Future<void> updateAutoGroupWindow(String schoolId, int days) async {
+    final current = _currentLoaded();
+    if (current == null) return;
+
+    emit(const SettingsActionInProgress());
+    final result = await _repository.updateSchool(
+      schoolId,
+      autoGroupWindowDays: days,
+    );
+    result.fold(
+      (f) => emit(SettingsActionError(f.message, current)),
+      (_) {
+        final updated = current.copyWith(
+          school: _patchSchool(current.school, autoGroupWindowDays: days),
+        );
+        emit(SettingsActionSuccess(
+            'Auto-group window set to $days day${days == 1 ? '' : 's'}', updated));
+        emit(updated);
+      },
+    );
+  }
+
   Future<void> updateRetentionPolicy(String schoolId, int? days) async {
     final current = _currentLoaded();
     if (current == null) return;
@@ -331,6 +353,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     bool? isActive,
     int? retentionDays,
     bool clearRetention = false,
+    int? autoGroupWindowDays,
   }) =>
       School(
         id:        old.id,
@@ -341,6 +364,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         resolvedReportRetentionDays:
             clearRetention ? null : (retentionDays ?? old.resolvedReportRetentionDays),
         lastCleanupDate: old.lastCleanupDate,
+        autoGroupWindowDays: autoGroupWindowDays ?? old.autoGroupWindowDays,
       );
 
   @override

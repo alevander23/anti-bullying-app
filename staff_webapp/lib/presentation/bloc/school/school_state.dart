@@ -9,7 +9,8 @@ class SchoolInitial extends SchoolState { const SchoolInitial(); }
 class SchoolLoading extends SchoolState { const SchoolLoading(); }
 class SchoolLoaded extends SchoolState {
   final Admin admin;
-  const SchoolLoaded({required this.admin});
+  final int autoGroupWindowDays;
+  const SchoolLoaded({required this.admin, this.autoGroupWindowDays = 5});
 }
 class SchoolError extends SchoolState {
   final String message;
