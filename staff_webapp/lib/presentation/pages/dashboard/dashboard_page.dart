@@ -107,6 +107,9 @@ class _DashboardPageState extends State<DashboardPage> {
               return TextButton.icon(
                 onPressed: () {
                   final reportCubit = context.read<ReportCubit>();
+                  final windowDays = schoolState is SchoolLoaded
+                      ? schoolState.autoGroupWindowDays
+                      : 5;
                   Navigator.pushNamed(
                     context,
                     '/groups',
@@ -114,6 +117,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       'admin': (schoolState as SchoolLoaded).admin,
                       'allReports': reports,
                       'reportCubit': reportCubit,
+                      'windowDays': windowDays,
                     },
                   );
                 },

@@ -159,6 +159,8 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
               const SizedBox(height: 20),
               _retentionCard(context, data, isLoading),
               const SizedBox(height: 20),
+              _autoGroupCard(context, data, isLoading),
+              const SizedBox(height: 20),
               _adminsCard(context, data, isLoading),
               const SizedBox(height: 40),
             ]),
@@ -197,6 +199,8 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
                     const SizedBox(height: 20),
                     _retentionCard(context, data, isLoading),
                     const SizedBox(height: 20),
+                    _autoGroupCard(context, data, isLoading),
+                    const SizedBox(height: 20),
                     _adminsCard(context, data, isLoading),
                   ],
                   const SizedBox(height: 20),
@@ -224,6 +228,8 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
               _schoolInfoCard(context, data, isLoading),
               const SizedBox(height: 20),
               _retentionCard(context, data, isLoading),
+              const SizedBox(height: 20),
+              _autoGroupCard(context, data, isLoading),
               const SizedBox(height: 20),
               _adminsCard(context, data, isLoading),
             ],
@@ -454,6 +460,72 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
             ]),
           ),
         ],
+      ]),
+    );
+  }
+
+  // ─── Auto-grouping window card ────────────────────────────────────────────
+
+  Widget _autoGroupCard(
+      BuildContext context, SettingsLoaded data, bool isLoading) {
+    final currentDays = data.school.autoGroupWindowDays;
+    // Sensible preset options (1–14 days)
+    const options = [1, 2, 3, 5, 7, 10, 14];
+
+    return _card(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionHeader(Icons.auto_awesome_outlined, 'Incident Grouping'),
+        const SizedBox(height: 6),
+        Text(
+          'When reports mention the same person and fall within this window, '
+          'they are suggested as a potential group for review.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<int>(
+          value: options.contains(currentDays) ? currentDays : options.first,
+          decoration: InputDecoration(
+            labelText: 'Auto-group window',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          ),
+          items: options
+              .map((d) => DropdownMenuItem(
+                    value: d,
+                    child: Text(d == 1 ? '1 day' : '$d days'),
+                  ))
+              .toList(),
+          onChanged: isLoading
+              ? null
+              : (val) {
+                  if (val != null) {
+                    context
+                        .read<SettingsCubit>()
+                        .updateAutoGroupWindow(data.school.id, val);
+                  }
+                },
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F4FF),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFBFCAF0)),
+          ),
+          child: Row(children: [
+            Icon(Icons.info_outline, size: 15, color: Colors.indigo.shade600),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Reports within $currentDays day${currentDays == 1 ? '' : 's'} of each other '
+                'that share a bully name will appear as suggestions on the Groups page.',
+                style: TextStyle(fontSize: 12, color: Colors.indigo.shade800),
+              ),
+            ),
+          ]),
+        ),
       ]),
     );
   }

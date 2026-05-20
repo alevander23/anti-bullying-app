@@ -62,6 +62,7 @@ class MyApp extends StatelessWidget {
             final admin = args['admin'] as Admin;
             final allReports = args['allReports'] as List<Report>;
             final reportCubit = args['reportCubit'] as ReportCubit;
+            final windowDays = args['windowDays'] as int? ?? 5;
             return MaterialPageRoute(
               settings: settings,
               builder: (_) => MultiBlocProvider(
@@ -69,7 +70,11 @@ class MyApp extends StatelessWidget {
                   BlocProvider(create: (_) => getIt<GroupCubit>()),
                   BlocProvider.value(value: reportCubit),
                 ],
-                child: GroupsPage(admin: admin, allReports: allReports),
+                child: GroupsPage(
+                  admin: admin,
+                  allReports: allReports,
+                  windowDays: windowDays,
+                ),
               ),
             );
           }

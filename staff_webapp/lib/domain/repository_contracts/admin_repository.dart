@@ -16,7 +16,7 @@ abstract class AdminRepository {
   Future<Either<Failure, List<School>>> getAllSchoolsIncludingInactive();
   Future<Either<Failure, School?>> getSchool(String schoolId);
   Future<Either<Failure, String>> createSchool({required String name, required String address});
-  Future<Either<Failure, void>> updateSchool(String schoolId, {String? name, String? address, bool? isActive, int? resolvedReportRetentionDays});
+  Future<Either<Failure, void>> updateSchool(String schoolId, {String? name, String? address, bool? isActive, int? resolvedReportRetentionDays, int? autoGroupWindowDays});
 
   // Admin management
   Future<Either<Failure, List<Admin>>> getAllAdmins();

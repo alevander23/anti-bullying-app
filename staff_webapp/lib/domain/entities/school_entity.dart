@@ -12,6 +12,9 @@ class School {
   /// The last date a cleanup pass was run for this school (date only, no time).
   final DateTime? lastCleanupDate;
 
+  /// How many days the auto-grouping window spans when clustering reports by shared bully name. Defaults to 5 if not set.
+  final int autoGroupWindowDays;
+
   const School({
     required this.id,
     required this.name,
@@ -20,5 +23,6 @@ class School {
     required this.createdAt,
     this.resolvedReportRetentionDays,
     this.lastCleanupDate,
+    this.autoGroupWindowDays = 5,
   });
 }

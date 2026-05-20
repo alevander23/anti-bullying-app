@@ -10,6 +10,7 @@ class SchoolModel extends School {
     required super.createdAt,
     super.resolvedReportRetentionDays,
     super.lastCleanupDate,
+    super.autoGroupWindowDays = 5,
   });
 
   factory SchoolModel.fromFirestore(DocumentSnapshot doc) {
@@ -22,6 +23,7 @@ class SchoolModel extends School {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       resolvedReportRetentionDays: data['resolvedReportRetentionDays'] as int?,
       lastCleanupDate: (data['lastCleanupDate'] as Timestamp?)?.toDate(),
+      autoGroupWindowDays: data['autoGroupWindowDays'] as int? ?? 5,
     );
   }
 
@@ -32,5 +34,6 @@ class SchoolModel extends School {
     'createdAt': FieldValue.serverTimestamp(),
     if (resolvedReportRetentionDays != null)
       'resolvedReportRetentionDays': resolvedReportRetentionDays,
+      'autoGroupWindowDays': autoGroupWindowDays,
   };
 }

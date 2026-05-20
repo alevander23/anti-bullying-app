@@ -26,7 +26,20 @@ class SchoolCubit extends Cubit<SchoolState> {
           emit(const SchoolError('Your account has been deactivated'));
           return;
         }
-        emit(SchoolLoaded(admin: admin));
+
+        // Fetch school to get per-school settings
+        int windowDays = 5;
+        if (admin.schoolId != null) {
+          final schoolResult = await _repository.getSchool(admin.schoolId!);
+          schoolResult.fold(
+            (_) => null,
+            (school) {
+              if (school != null) windowDays = school.autoGroupWindowDays;
+            },
+          );
+        }
+
+        emit(SchoolLoaded(admin: admin, autoGroupWindowDays: windowDays));
 
         // Trigger daily cleanup for regular admins with a school assigned
         if (!admin.isSuperAdmin && admin.schoolId != null) {
