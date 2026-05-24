@@ -536,7 +536,22 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
       BuildContext context, SettingsLoaded data, bool isLoading) {
     return _card(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionHeader(Icons.people_outline, 'Administrators'),
+        Row(
+          children: [
+            Expanded(child: _sectionHeader(Icons.people_outline, 'Administrators')),
+            TextButton.icon(
+              onPressed: isLoading
+                  ? null
+                  : () => _showInviteAdminDialog(context, data,
+                      fixedSchoolId: widget.currentAdmin.isSuperAdmin
+                          ? null
+                          : widget.currentAdmin.schoolId),
+              icon: const Icon(Icons.person_add_outlined, size: 16),
+              label: const Text('Invite'),
+              style: TextButton.styleFrom(foregroundColor: _accent),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         if (data.admins.isEmpty)
           Padding(
@@ -831,6 +846,120 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
   }
 
   // ─── Dialogs ──────────────────────────────────────────────────────────────
+
+  void _showInviteAdminDialog(BuildContext context, SettingsLoaded data,
+      {String? fixedSchoolId}) {
+    final emailCtrl = TextEditingController();
+    final nameCtrl  = TextEditingController();
+    final formKey   = GlobalKey<FormState>();
+    AdminRole selectedRole     = AdminRole.admin;
+    String?   selectedSchoolId = fixedSchoolId ?? (data.school.id.isNotEmpty ? data.school.id : null);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Invite Administrator',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: SizedBox(
+            width: 400,
+            child: Form(
+              key: formKey,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                TextFormField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                      labelText: 'Full name',
+                      border: OutlineInputBorder()),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: emailCtrl,
+                  decoration: const InputDecoration(
+                      labelText: 'Email address',
+                      border: OutlineInputBorder()),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Email is required';
+                    if (!v.contains('@')) return 'Enter a valid email';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                if (widget.currentAdmin.isSuperAdmin) ...[ 
+                  DropdownButtonFormField<AdminRole>(
+                    value: selectedRole,
+                    decoration: const InputDecoration(
+                        labelText: 'Role', border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: AdminRole.admin, child: Text('Admin')),
+                      DropdownMenuItem(value: AdminRole.superAdmin, child: Text('Super Admin')),
+                    ],
+                    onChanged: (r) => setDialogState(() => selectedRole = r!),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedSchoolId,
+                    decoration: const InputDecoration(
+                        labelText: 'Assign to school',
+                        border: OutlineInputBorder()),
+                    items: data.allSchools
+                        .map((s) => DropdownMenuItem(
+                              value: s.id,
+                              child: Text(s.name, overflow: TextOverflow.ellipsis),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setDialogState(() => selectedSchoolId = v),
+                  ),
+                ] else
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _accent.withOpacity(0.07),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(children: [
+                      Icon(Icons.school_outlined, size: 16, color: _accent),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Will be added to: ${data.school.name}',
+                          style: TextStyle(fontSize: 13, color: _accent),
+                        ),
+                      ),
+                    ]),
+                  ),
+              ]),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
+            FilledButton.icon(
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                if (widget.currentAdmin.isSuperAdmin && selectedSchoolId == null) return;
+                context.read<SettingsCubit>().inviteAdmin(
+                      email: emailCtrl.text.trim(),
+                      name: nameCtrl.text.trim(),
+                      role: selectedRole,
+                      schoolId: selectedSchoolId,
+                    );
+                Navigator.pop(ctx);
+              },
+              icon: const Icon(Icons.send_outlined, size: 16),
+              label: const Text('Send Invite'),
+              style: FilledButton.styleFrom(backgroundColor: _accent),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showApproveDialog(BuildContext context, PendingAdmin pending,
       SettingsLoaded data) {
