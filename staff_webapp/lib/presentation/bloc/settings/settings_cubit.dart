@@ -266,6 +266,31 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
   }
 
+  Future<void> inviteAdmin({
+    required String email,
+    required String name,
+    required AdminRole role,
+    String? schoolId,
+  }) async {
+    final current = _currentLoaded();
+    if (current == null) return;
+
+    emit(const SettingsActionInProgress());
+    final result = await _repository.inviteAdmin(
+      email: email,
+      name: name,
+      role: role,
+      schoolId: schoolId,
+    );
+    result.fold(
+      (f) => emit(SettingsActionError('Invite failed: ${f.message}', current)),
+      (_) {
+        emit(SettingsActionSuccess('Invite sent to $email', current));
+        emit(current);
+      },
+    );
+  }
+
   Future<void> assignAdminToSchool(String adminUid, String schoolId) async {
     final current = _currentLoaded();
     if (current == null) return;
