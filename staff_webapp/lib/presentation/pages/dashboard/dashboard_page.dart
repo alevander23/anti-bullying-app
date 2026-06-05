@@ -83,7 +83,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   AppBar _buildAppBar(BuildContext context, SchoolState schoolState) {
-    String title = 'Admin Dashboard';
+    String title = 'Dashboard';
     if (schoolState is SchoolLoaded) {
       title = schoolState.admin.isSuperAdmin
           ? 'Super Admin Dashboard'

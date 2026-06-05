@@ -137,8 +137,10 @@ class _ReportRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       report.bullyNames.isNotEmpty
-                          ? report.bullyNames.join(', ')
-                          : '${report.description.characters.take(30).toString()}...',
+                        ? report.bullyNames.join(', ')
+                        : report.title.isNotEmpty
+                            ? '${report.title.characters.take(30).toString()}...'
+                            : '${report.description.characters.take(30).toString()}...',
                       style: TextStyle(
                         fontWeight: report.isNew
                             ? FontWeight.bold
