@@ -40,3 +40,17 @@ class NetworkFailure extends Failure {
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure([super.message = 'An unexpected error occurred']);
 }
+
+// Admin System
+class PermissionFailure extends Failure {
+  const PermissionFailure([super.message = 'You do not have permission to perform this action']);
+}
+class NotFoundFailure extends Failure {
+  const NotFoundFailure([super.message = 'The requested resource was not found']);
+}
+class SchoolAccessFailure extends Failure {
+  const SchoolAccessFailure([super.message = 'You do not have access to this school\'s data']);
+}
+class FirestoreFailure extends Failure {
+  const FirestoreFailure(super.message);
+}

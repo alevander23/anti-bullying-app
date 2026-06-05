@@ -1,21 +1,25 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:staff_webapp/core/constants/firestore_constants.dart';
 import 'package:staff_webapp/data/data_models/user_model.dart';
 import 'package:staff_webapp/data/data_sources/auth_remote_data_source.dart';
 import 'package:staff_webapp/domain/entities/user_entity.dart';
 
-
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final fb.FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final FirebaseFirestore _firestore;
 
   static const String _tenantId = 'common';
 
   AuthRemoteDataSourceImpl({
     required fb.FirebaseAuth firebaseAuth,
     required GoogleSignIn googleSignIn,
+    required FirebaseFirestore firestore,
   })  : _firebaseAuth = firebaseAuth,
-        _googleSignIn = googleSignIn;
+        _googleSignIn = googleSignIn,
+        _firestore = firestore;
 
   @override
   Future<UserModel> signInWithMicrosoft() async {
@@ -51,7 +55,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       provider: AuthProvider.microsoft,
     );
   }
-
 
   @override
   Future<UserModel> signInWithGoogle() async {
@@ -111,7 +114,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 
-
   AuthProvider _providerFromUser(fb.User fbUser) {
     for (final info in fbUser.providerData) {
       if (info.providerId == 'microsoft.com') return AuthProvider.microsoft;
@@ -121,15 +123,36 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return AuthProvider.unknown;
   }
 
-  // AI stuff here
-
-  /// Authorization check — plug in your logic here.
-  /// Options:
-  ///   A) Custom Firebase claim: (await fbUser.getIdTokenResult()).claims?['isStaff'] == true
-  ///   B) Firestore lookup: FirebaseFirestore.instance.collection('staff').doc(fbUser.uid).get()
-  ///   C) Email domain:    fbUser.email?.endsWith('@yourcompany.com') ?? false
+  /// Checks if the signed-in user has an active admin document.
+  /// If not, writes a pendingAdmins doc so an existing admin can approve them.
   Future<bool> _checkAuthorization(fb.User fbUser) async {
-    // TODO: replace with A, B, or C before production
-    return true;
+    try {
+      final adminDoc = await _firestore
+          .collection(FirestoreConstants.admins)
+          .doc(fbUser.uid)
+          .get();
+
+      if (adminDoc.exists) {
+        final data = adminDoc.data() as Map<String, dynamic>;
+        final isActive = data['isActive'] as bool? ?? false;
+        return isActive;
+      }
+
+      // Not an admin — write/update a pending request so admins can approve them
+      await _firestore
+          .collection(FirestoreConstants.pendingAdmins)
+          .doc(fbUser.uid)
+          .set({
+        'email': fbUser.email ?? '',
+        'name': fbUser.displayName ?? fbUser.email ?? 'Unknown',
+        if (fbUser.photoURL != null) 'photoUrl': fbUser.photoURL,
+        'requestedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      return false;
+    } catch (_) {
+      // If Firestore fails, deny access rather than accidentally granting it
+      return false;
+    }
   }
 }

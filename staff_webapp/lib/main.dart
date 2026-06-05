@@ -5,8 +5,19 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/auth_state.dart';
+import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
+import 'package:staff_webapp/presentation/pages/dashboard/dashboard_page.dart';
+import 'package:staff_webapp/presentation/pages/groups/groups_page.dart';
 import 'package:staff_webapp/presentation/pages/splash_page.dart';
-import 'package:staff_webapp/presentation/pages/sso_login_page.dart';
+import 'package:staff_webapp/presentation/pages/accounts/SSO_login_page.dart';
+import 'package:staff_webapp/presentation/pages/waiting_page.dart';
+import 'package:staff_webapp/domain/entities/admin_entity.dart';
+import 'package:staff_webapp/domain/entities/group_entity.dart';
+import 'package:staff_webapp/domain/entities/report_entity.dart';
+import 'package:staff_webapp/presentation/pages/groups/group_detail_page.dart';
+import 'package:staff_webapp/presentation/pages/groups/create_edit_group_page.dart';
 import 'firebase_options.dart';
 import 'di.dart';
 
@@ -27,48 +38,104 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Staff Portal',
         theme: ThemeData(
-          colorSchemeSeed: Colors.blue,
+          colorSchemeSeed: Colors.indigo,
           useMaterial3: true,
         ),
-        // SplashPage checks for an existing session then routes accordingly.
         home: const SplashPage(),
         routes: {
           '/login': (_) => const SSOLoginPage(),
-          '/home':  (_) => const HomePage(),
+          '/waiting': (_) => BlocProvider.value(
+                value: getIt<AuthCubit>(),
+                child: const WaitingPage(),
+              ),
+          '/home': (_) => MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => getIt<SchoolCubit>()),
+                  BlocProvider(create: (_) => getIt<ReportCubit>()),
+                ],
+                child: const DashboardPage(),
+              ),
         },
-      ),
-    );
-  }
-}
-
-// ─── Home page placeholder ────────────────────────────────────────────────────
-// Replace the body with your real home page widget once auth is wired up.
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Staff Portal'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () => context.read<AuthCubit>().signOut(),
-          ),
-        ],
-      ),
-      body: BlocListener<AuthCubit, AuthState>(
-        listener: (context, state) {
-          if (state is AuthUnauthenticated) {
-            Navigator.of(context).pushReplacementNamed('/login');
+        onGenerateRoute: (settings) {
+          if (settings.name == '/groups') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final reportCubit = args['reportCubit'] as ReportCubit;
+            final windowDays = args['windowDays'] as int? ?? 5;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => getIt<GroupCubit>()),
+                  BlocProvider.value(value: reportCubit),
+                ],
+                child: GroupsPage(
+                  admin: admin,
+                  allReports: allReports,
+                  windowDays: windowDays,
+                ),
+              ),
+            );
           }
+          if (settings.name == '/groups/detail') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final groupId = args['groupId'] as String;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final groupCubit = args['groupCubit'] as GroupCubit;
+            final reportCubit = args['reportCubit'] as ReportCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: groupCubit),
+                  BlocProvider.value(value: reportCubit),
+                ],
+                child: GroupDetailPage(
+                  groupId: groupId,
+                  admin: admin,
+                  allReports: allReports,
+                ),
+              ),
+            );
+          }
+          if (settings.name == '/groups/detail/edit') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final existing = args['existing'] as IncidentGroup;
+            final groupCubit = args['groupCubit'] as GroupCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => BlocProvider.value(
+                value: groupCubit,
+                child: CreateEditGroupPage(
+                  admin: admin,
+                  allReports: allReports,
+                  existing: existing,
+                ),
+              ),
+            );
+          }
+          if (settings.name == '/groups/create') {
+            final args = settings.arguments as Map<String, dynamic>;
+            final admin = args['admin'] as Admin;
+            final allReports = args['allReports'] as List<Report>;
+            final groupCubit = args['groupCubit'] as GroupCubit;
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => BlocProvider.value(
+                value: groupCubit,
+                child: CreateEditGroupPage(
+                  admin: admin,
+                  allReports: allReports,
+                ),
+              ),
+            );
+          }
+          return null;
         },
-        child: const Center(
-          child: Text('✅ Authorized', style: TextStyle(fontSize: 20)),
-        ),
       ),
     );
   }

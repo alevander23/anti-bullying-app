@@ -24,7 +24,15 @@ class _SplashPageState extends State<SplashPage> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthSessionRestored || state is AuthSuccess) {
-          Navigator.of(context).pushReplacementNamed('/home');
+          final user = state is AuthSuccess
+              ? state.user
+              : (state as AuthSessionRestored).user;
+
+          if (user.isAuthorized) {
+            Navigator.of(context).pushReplacementNamed('/home');
+          } else {
+            Navigator.of(context).pushReplacementNamed('/waiting');
+          }
         } else if (state is AuthUnauthenticated) {
           Navigator.of(context).pushReplacementNamed('/login');
         }
