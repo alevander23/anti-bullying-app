@@ -163,6 +163,7 @@ class _ReportPageState extends State<ReportPage> {
       setState(() => _bullyNames.removeAt(index));
 
   void _submit() {
+    _addBullyName();
     _cubit.submitReport(
       schoolId: SchoolConfig.schoolId,
       title: _titleController.text.trim(),
