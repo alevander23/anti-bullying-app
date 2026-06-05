@@ -6,9 +6,9 @@ class SchoolConfig {
 
   /// Firestore document ID under the /schools collection. Case-sensitive. Every school will get their own build with this premade
   static const String schoolId = 'school_greenfield';
-
+  
   /// Shown in the app bar and hero card.
-  static const String schoolName = 'Your School Name';
+  static const String schoolName = 'Greenfield School';
 
   SchoolConfig._();
 }
