@@ -32,8 +32,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       print('FirebaseAuthException: code=${e.code} message=${e.message}');
       rethrow;
     } catch (e, stack) {
-      print('Unknown error: $e');
-      print(stack);
       rethrow;
     }
 

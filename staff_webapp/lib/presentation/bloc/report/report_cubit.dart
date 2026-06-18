@@ -221,8 +221,11 @@ class ReportCubit extends Cubit<ReportState> {
     _lastDocument = null;
     _hasMore = true;
     _isLoadingPage = false;
+
     emit(const ReportLoading());
-    await Future.wait([_loadStats(), _fetchPage()]);
+
+    await _loadStats();
+    await _fetchPage();
   }
 
   void _resetAndLoad() {
