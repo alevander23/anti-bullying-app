@@ -803,7 +803,7 @@ class _BullyNamesField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Persons involved',
+          'Bullies Names',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
