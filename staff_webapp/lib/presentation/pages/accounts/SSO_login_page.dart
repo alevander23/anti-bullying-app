@@ -212,7 +212,7 @@ class _SSOLoginPageState extends State<SSOLoginPage>
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   const Text(
-                                    'CHOOSE YOUR PROVIDER',
+                                    'PLEASE SIGN IN WITH MICROSOFT',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 11,
@@ -233,17 +233,6 @@ class _SSOLoginPageState extends State<SSOLoginPage>
                                     onPressed: cubit.signInWithMicrosoft,
                                   ),
                                   const SizedBox(height: 12),
-
-                                  // Google button
-                                  _SSOButton(
-                                    label: 'Continue with Google',
-                                    icon: _GoogleLogo(),
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF3C4043),
-                                    isLoading: isLoading,
-                                    onPressed: cubit.signInWithGoogle,
-                                    hasBorder: true,
-                                  ),
 
                                   if (isLoading) ...[
                                     const SizedBox(height: 24),
@@ -413,56 +402,5 @@ class _MicrosoftLogoPainter extends CustomPainter {
     for (int i = 0; i < 4; i++) {
       canvas.drawRect(rects[i], Paint()..color = colors[i]);
     }
-  }
-}
-
-// ─── Google Logo ──────────────────────────────────────────────────────────────
-
-class _GoogleLogo extends StatelessWidget {
-  const _GoogleLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _GoogleLogoPainter());
-  }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  @override
-  bool shouldRepaint(_) => true;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final length = size.width;
-    final verticalOffset = (size.height / 2) - (length / 2);
-    final bounds = Offset(0, verticalOffset) & Size.square(length);
-    final center = bounds.center;
-    final arcThickness = size.width / 4.5;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = arcThickness;
-
-    void drawArc(double startAngle, double sweepAngle, Color color) {
-      canvas.drawArc(bounds, startAngle, sweepAngle, false,
-          paint..color = color);
-    }
-
-    drawArc(3.5, 1.9, Colors.red);
-    drawArc(2.5, 1.0, Colors.amber);
-    drawArc(0.9, 1.6, Colors.green.shade600);
-    drawArc(-0.18, 1.1, Colors.blue.shade600);
-
-    canvas.drawRect(
-      Rect.fromLTRB(
-        center.dx,
-        center.dy - (arcThickness / 2),
-        bounds.centerRight.dx + (arcThickness / 2) - 4,
-        bounds.centerRight.dy + (arcThickness / 2),
-      ),
-      paint
-        ..color = Colors.blue.shade600
-        ..style = PaintingStyle.fill
-        ..strokeWidth = 0,
-    );
   }
 }

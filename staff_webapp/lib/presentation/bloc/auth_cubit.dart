@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/core/error/failures.dart';
-import 'package:staff_webapp/domain/use_cases/sign_in_with_google.dart';
 import 'package:staff_webapp/domain/use_cases/sign_in_with_microsoft.dart';
 import 'package:staff_webapp/domain/use_cases/sign_out_use_case.dart';
 import 'package:staff_webapp/domain/use_cases/get_current_user_use_case.dart';
@@ -11,7 +10,6 @@ import 'package:staff_webapp/presentation/bloc/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final SignInWithMicrosoft _microsoftUseCase;
-  final SignInWithGoogle _googleUseCase;
   final SignOutUseCase _signOutUseCase;
   final GetCurrentUserUseCase _getCurrentUserUseCase;
   final AuthRepository _authRepository; // for stream subscription
@@ -20,12 +18,10 @@ class AuthCubit extends Cubit<AuthState> {
 
   AuthCubit({
     required SignInWithMicrosoft microsoftUseCase,
-    required SignInWithGoogle googleUseCase,
     required SignOutUseCase signOutUseCase,
     required GetCurrentUserUseCase getCurrentUserUseCase,
     required AuthRepository authRepository,
   })  : _microsoftUseCase = microsoftUseCase,
-        _googleUseCase = googleUseCase,
         _signOutUseCase = signOutUseCase,
         _getCurrentUserUseCase = getCurrentUserUseCase,
         _authRepository = authRepository,
@@ -51,15 +47,6 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> signInWithMicrosoft() async {
     emit(const AuthLoading());
     final result = await _microsoftUseCase(const NoParams());
-    result.fold(
-      (failure) => _handleFailure(failure),
-      (user) => emit(AuthSuccess(user)),
-    );
-  }
-
-  Future<void> signInWithGoogle() async {
-    emit(const AuthLoading());
-    final result = await _googleUseCase(const NoParams());
     result.fold(
       (failure) => _handleFailure(failure),
       (user) => emit(AuthSuccess(user)),
@@ -101,10 +88,6 @@ class AuthCubit extends Cubit<AuthState> {
 
   void _handleFailure(Failure failure) {
     if (failure is MicrosoftAuthFailure && failure.errorCode == 'cancelled-by-user') {
-      emit(const AuthInitial());
-      return;
-    }
-    if (failure is GoogleAuthFailure && failure.message.contains('cancelled')) {
       emit(const AuthInitial());
       return;
     }

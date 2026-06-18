@@ -36,21 +36,6 @@ class UserRemoteDataSource {
     return _fetchOrCreateProfile(fbUser);
   }
 
-  // Create user with email/password
-
-  Future<UserModel?> createUser(String email, String password) async {
-    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    final fbUser = credential.user;
-    if (fbUser == null) return null;
-
-    // Write initial profile to Realtime Database
-    await _writeProfile(fbUser, provider: AuthProvider.email);
-    return _fetchOrCreateProfile(fbUser);
-  }
-
   Future<UserModel?> signInWithMicrosoft() async {
     final fbUser = _firebaseAuth.currentUser;
     if (fbUser == null) return null;

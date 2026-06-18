@@ -1,4 +1,4 @@
-enum AuthProvider { microsoft, google, email, unknown }
+enum AuthProvider { microsoft, unknown }
 
 class User {
   final String id;

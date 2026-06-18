@@ -5,7 +5,7 @@
 // WHY: Replacing raw `String` errors with typed Failures gives you:
 //   - Exhaustive pattern matching in the UI (no forgotten cases)
 //   - Richer metadata (e.g. original exception, codes) without coupling layers
-//   - Easy extension: add GoogleFailure, NetworkFailure, etc. independently
+//   - Easy extension: add NetworkFailure, etc. independently
 
 abstract class Failure {
   final String message;
@@ -23,10 +23,6 @@ class AuthFailure extends Failure {
 class MicrosoftAuthFailure extends AuthFailure {
   final String? errorCode;
   const MicrosoftAuthFailure(super.message, {this.errorCode});
-}
-
-class GoogleAuthFailure extends AuthFailure {
-  const GoogleAuthFailure(super.message);
 }
 
 class SignOutFailure extends Failure {

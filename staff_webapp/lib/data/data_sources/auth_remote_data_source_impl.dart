@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:staff_webapp/core/constants/firestore_constants.dart';
 import 'package:staff_webapp/data/data_models/user_model.dart';
 import 'package:staff_webapp/data/data_sources/auth_remote_data_source.dart';
@@ -8,17 +7,14 @@ import 'package:staff_webapp/domain/entities/user_entity.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final fb.FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
   final FirebaseFirestore _firestore;
 
   static const String _tenantId = 'common';
 
   AuthRemoteDataSourceImpl({
     required fb.FirebaseAuth firebaseAuth,
-    required GoogleSignIn googleSignIn,
     required FirebaseFirestore firestore,
   })  : _firebaseAuth = firebaseAuth,
-        _googleSignIn = googleSignIn,
         _firestore = firestore;
 
   @override
@@ -56,44 +52,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 
-  @override
-  Future<UserModel> signInWithGoogle() async {
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) {
-      throw fb.FirebaseAuthException(
-        code: 'cancelled-by-user',
-        message: 'Google sign-in was cancelled.',
-      );
-    }
-
-    final googleAuth = await googleUser.authentication;
-    final credential = fb.GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final userCredential = await _firebaseAuth.signInWithCredential(credential);
-    final fbUser = userCredential.user;
-
-    if (fbUser == null) {
-      throw fb.FirebaseAuthException(
-        code: 'null-user',
-        message: 'Google sign-in returned no user.',
-      );
-    }
-
-    return UserModel.fromFirebaseUser(
-      fbUser,
-      isAuthorized: await _checkAuthorization(fbUser),
-      provider: AuthProvider.google,
-    );
-  }
 
   @override
   Future<void> signOut() async {
     await Future.wait([
-      _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
+      _firebaseAuth.signOut()
     ]);
   }
 
@@ -117,8 +80,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthProvider _providerFromUser(fb.User fbUser) {
     for (final info in fbUser.providerData) {
       if (info.providerId == 'microsoft.com') return AuthProvider.microsoft;
-      if (info.providerId == 'google.com') return AuthProvider.google;
-      if (info.providerId == 'password') return AuthProvider.email;
     }
     return AuthProvider.unknown;
   }

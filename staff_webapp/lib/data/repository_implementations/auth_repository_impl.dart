@@ -34,14 +34,6 @@ class AuthRepositoryImpl implements AuthRepository {
         () => _remoteDataSource.signInWithMicrosoft(),
         provider: AuthProvider.microsoft,
       );
-
-  @override
-  Future<Either<Failure, User>> signInWithGoogle() =>
-      _runAuthAction(
-        () => _remoteDataSource.signInWithGoogle(),
-        provider: AuthProvider.google,
-      );
-
   // Sign out
 
   @override
@@ -98,8 +90,6 @@ class AuthRepositoryImpl implements AuthRepository {
       _                                            => e.message ?? 'Authentication failed.',
     };
 
-    return provider == AuthProvider.microsoft
-        ? MicrosoftAuthFailure(message, errorCode: e.code)
-        : GoogleAuthFailure(message);
+    return MicrosoftAuthFailure(message, errorCode: e.code);
   }
 }

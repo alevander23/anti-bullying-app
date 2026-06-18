@@ -11,13 +11,5 @@ class UserRepositoryImpl implements UserRepository {
   Future<User?> getCurrentUser() => _dataSource.getCurrentUser();
 
   @override
-  Future<User?> login(String email, String password) =>
-      _dataSource.login(email, password);
-
-  @override
-  Future<User?> createUser(String email, String password) =>
-      _dataSource.createUser(email, password);
-
-  @override
   Future<User?> signInWithMicrosoft() => _dataSource.signInWithMicrosoft();
 }

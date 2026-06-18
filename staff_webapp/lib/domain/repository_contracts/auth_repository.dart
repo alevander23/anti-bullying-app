@@ -20,7 +20,6 @@ abstract class AuthRepository {
   /// A stream that emits a new value whenever auth state changes.
   Stream<User?> get authStateChanges;
 
-  Future<Either<Failure, User>> signInWithGoogle();
   Future<Either<Failure, User>> signInWithMicrosoft();
 
   Future<Either<Failure, void>> signOut();
