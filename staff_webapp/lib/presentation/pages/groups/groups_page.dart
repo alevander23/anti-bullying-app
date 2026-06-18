@@ -31,7 +31,6 @@ class _GroupsPageState extends State<GroupsPage>
   String? _loadingGroupId;
   late final TabController _tabController;
 
-  // Track which suggestions are being confirmed (loading state per suggestion)
   final Set<String> _confirmingIds = {};
 
   @override
@@ -42,7 +41,8 @@ class _GroupsPageState extends State<GroupsPage>
           widget.admin.isSuperAdmin ? null : widget.admin.schoolId,
         );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GroupCubit>().computeSuggestions(widget.allReports, windowDays: widget.windowDays);
+      context.read<GroupCubit>().computeSuggestions(widget.allReports,
+          windowDays: widget.windowDays);
     });
   }
 
@@ -106,7 +106,7 @@ class _GroupsPageState extends State<GroupsPage>
         return Scaffold(
           backgroundColor: const Color(0xFFF5F7FA),
           appBar: AppBar(
-            title: const Text('Incident groups',
+            title: const Text('Incident Groups',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             backgroundColor: Colors.white,
             foregroundColor: Colors.black87,
@@ -146,7 +146,6 @@ class _GroupsPageState extends State<GroupsPage>
               ),
             ),
             actions: [
-              // "New group" button — always shown in top-right
               Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: FilledButton.icon(
@@ -189,7 +188,7 @@ class _GroupsPageState extends State<GroupsPage>
           child: groups.isEmpty
               ? _buildEmpty(context)
               : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                   itemCount: groups.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (_, i) => _GroupCard(
@@ -208,46 +207,73 @@ class _GroupsPageState extends State<GroupsPage>
   Widget _buildStatsAndFilter(BuildContext context, GroupLoaded state) {
     final all = state.groups;
     final open = all.where((g) => g.status == GroupStatus.open).length;
-    final review = all.where((g) => g.status == GroupStatus.underReview).length;
+    final review =
+        all.where((g) => g.status == GroupStatus.underReview).length;
     final closed = all.where((g) => g.status == GroupStatus.closed).length;
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Stat cards — same visual weight as dashboard StatsRow ─────────
           Row(
             children: [
-              _StatChip(
+              Expanded(
+                child: _DashStatCard(
                   label: 'Total',
                   value: '${all.length}',
-                  color: Colors.grey.shade700),
-              const SizedBox(width: 10),
-              _StatChip(
+                  icon: Icons.folder_outlined,
+                  iconColor: Colors.grey.shade600,
+                  iconBg: Colors.grey.shade100,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DashStatCard(
                   label: 'Open',
                   value: '$open',
-                  color: const Color(0xFF185FA5)),
-              const SizedBox(width: 10),
-              _StatChip(
-                  label: 'Under review',
+                  icon: Icons.folder_open_outlined,
+                  iconColor: const Color(0xFF185FA5),
+                  iconBg: const Color(0xFFE6F1FB),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DashStatCard(
+                  label: 'Under Review',
                   value: '$review',
-                  color: const Color(0xFF534AB7)),
-              const SizedBox(width: 10),
-              _StatChip(
+                  icon: Icons.find_in_page_outlined,
+                  iconColor: const Color(0xFF534AB7),
+                  iconBg: const Color(0xFFEEEDFE),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DashStatCard(
                   label: 'Closed',
                   value: '$closed',
-                  color: const Color(0xFF3B6D11)),
+                  icon: Icons.check_circle_outline,
+                  iconColor: const Color(0xFF3B6D11),
+                  iconBg: const Color(0xFFEAF3DE),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 14),
+
+          // ── Filter pills ──────────────────────────────────────────────────
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                const Text('Filter:',
+                Text('Filter:',
                     style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w500)),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade700)),
                 const SizedBox(width: 8),
                 _FilterPill(
                   label: 'All',
@@ -265,7 +291,7 @@ class _GroupsPageState extends State<GroupsPage>
                 ),
                 const SizedBox(width: 6),
                 _FilterPill(
-                  label: 'Under review',
+                  label: 'Under Review',
                   active: state.statusFilter == GroupStatus.underReview,
                   onTap: () => context
                       .read<GroupCubit>()
@@ -330,13 +356,14 @@ class _GroupsPageState extends State<GroupsPage>
                 size: 56, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             const Text('No suggestions',
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w500)),
+                style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             Text(
-              'When multiple reports mention the same\nperson within 5 days, a suggestion will appear here.',
+              'When multiple reports mention the same\nperson within ${widget.windowDays} days, a suggestion will appear here.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600, height: 1.5),
+              style:
+                  TextStyle(color: Colors.grey.shade600, height: 1.5),
             ),
           ],
         ),
@@ -346,10 +373,10 @@ class _GroupsPageState extends State<GroupsPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Info banner
+        // Info banner — same colour language as the rest of the app
         Container(
           color: const Color(0xFFF0F4FF),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
           child: Row(
             children: [
               Icon(Icons.info_outline,
@@ -357,7 +384,8 @@ class _GroupsPageState extends State<GroupsPage>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Reports that share a bully name and occurred within ${widget.windowDays} day${widget.windowDays == 1 ? '' : 's'} '
+                  'Reports that share a bully name and occurred within '
+                  '${widget.windowDays} day${widget.windowDays == 1 ? '' : 's'} '
                   'of each other are grouped here. Review each suggestion and '
                   'confirm the ones you believe are related.',
                   style: TextStyle(
@@ -371,14 +399,15 @@ class _GroupsPageState extends State<GroupsPage>
         ),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             itemCount: suggestions.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) => _SuggestionCard(
               suggestion: suggestions[i],
               allReports: widget.allReports,
               isConfirming: _confirmingIds.contains(suggestions[i].id),
-              onConfirm: () => _confirmSuggestion(context, suggestions[i]),
+              onConfirm: () =>
+                  _confirmSuggestion(context, suggestions[i]),
             ),
           ),
         ),
@@ -422,6 +451,78 @@ String _fmtDate(DateTime dt) {
   return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
 }
 
+// ── Stat card — mirrors the card style used in dashboard's StatsRow ───────────
+
+class _DashStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+
+  const _DashStatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Sub-widgets ───────────────────────────────────────────────────────────────
 
 class _SuggestionBadge extends StatelessWidget {
@@ -430,7 +531,8 @@ class _SuggestionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           color: Colors.orange.shade600,
           borderRadius: BorderRadius.circular(10),
@@ -471,8 +573,8 @@ class _SuggestionCard extends StatelessWidget {
         border: Border.all(color: Colors.orange.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.06),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -486,10 +588,9 @@ class _SuggestionCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Auto badge
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(6),
@@ -510,7 +611,6 @@ class _SuggestionCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // "Confirm group" button — top-right of card
                 isConfirming
                     ? SizedBox(
                         width: 120,
@@ -540,7 +640,8 @@ class _SuggestionCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 0),
                             textStyle: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
                           ),
                           icon: const Icon(Icons.check, size: 14),
                           label: const Text('Confirm group'),
@@ -550,7 +651,6 @@ class _SuggestionCard extends StatelessWidget {
             ),
           ),
 
-          // ── Bully names ──────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(
@@ -560,7 +660,6 @@ class _SuggestionCard extends StatelessWidget {
             ),
           ),
 
-          // ── Meta row ────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Wrap(
@@ -587,7 +686,6 @@ class _SuggestionCard extends StatelessWidget {
 
           const Divider(height: 1),
 
-          // ── Report list ──────────────────────────────────────────────────
           ...suggestion.reports.map((r) => _ReportRow(report: r)),
         ],
       ),
@@ -668,39 +766,6 @@ class _BullyChip extends StatelessWidget {
       );
 }
 
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  const _StatChip(
-      {required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(value,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: color)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12, color: color.withOpacity(0.8))),
-        ],
-      ),
-    );
-  }
-}
-
 class _FilterPill extends StatelessWidget {
   final String label;
   final bool active;
@@ -720,7 +785,8 @@ class _FilterPill extends StatelessWidget {
           color: active ? Colors.black87 : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: active ? Colors.black87 : Colors.grey.shade300),
+              color:
+                  active ? Colors.black87 : Colors.grey.shade300),
         ),
         child: Text(
           label,
@@ -740,7 +806,9 @@ class _GroupCard extends StatelessWidget {
   final VoidCallback onTap;
   final bool isLoading;
   const _GroupCard(
-      {required this.group, required this.onTap, this.isLoading = false});
+      {required this.group,
+      required this.onTap,
+      this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -757,6 +825,13 @@ class _GroupCard extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -823,7 +898,8 @@ class _GroupCard extends StatelessWidget {
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                      child:
+                          CircularProgressIndicator(strokeWidth: 2.5),
                     ),
                   ),
                 ),
@@ -900,8 +976,8 @@ class _StatusBadge extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(
+          color: bg, borderRadius: BorderRadius.circular(6)),
       child: Text(label,
           style: TextStyle(
               fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
@@ -921,7 +997,8 @@ class _MetaChip extends StatelessWidget {
           Icon(icon, size: 14, color: Colors.grey.shade500),
           const SizedBox(width: 3),
           Text(label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              style: TextStyle(
+                  fontSize: 12, color: Colors.grey.shade500)),
         ],
       );
 }
