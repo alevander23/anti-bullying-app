@@ -127,10 +127,13 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-        IconButton(
+          IconButton(
           icon: const Icon(Icons.logout),
           tooltip: 'Sign out',
-          onPressed: () => context.read<AuthCubit>().signOut(),
+          onPressed: () async {
+            await context.read<AuthCubit>().signOut();
+            Navigator.pushNamed(context, '/login');
+          },
         ),
         // Settings button — shown when admin is loaded
         if (schoolState is SchoolLoaded)
