@@ -7,18 +7,18 @@ import 'package:staff_webapp/domain/entities/report_entity.dart';
 import 'package:staff_webapp/domain/entities/school_entity.dart';
 
 abstract class AdminRepository {
-  // Current admin
+  // Provides access to the currently authenticated admin's data
   Future<Either<Failure, Admin?>> getCurrentAdmin();
   Stream<Admin?> watchCurrentAdmin();
 
-  // Schools
+  // Manages school-related operations such as retrieval, creation, and updates
   Future<Either<Failure, List<School>>> getAllSchools();
   Future<Either<Failure, List<School>>> getAllSchoolsIncludingInactive();
   Future<Either<Failure, School?>> getSchool(String schoolId);
   Future<Either<Failure, String>> createSchool({required String name, required String address});
   Future<Either<Failure, void>> updateSchool(String schoolId, {String? name, String? address, bool? isActive, int? resolvedReportRetentionDays, int? autoGroupWindowDays});
 
-  // Admin management
+  // Manages administrative user operations including creation, assignment, and deactivation
   Future<Either<Failure, List<Admin>>> getAllAdmins();
   Future<Either<Failure, List<Admin>>> getAdminsForSchool(String schoolId);
   Future<Either<Failure, void>> createAdmin({
@@ -37,7 +37,7 @@ abstract class AdminRepository {
   Future<Either<Failure, void>> assignAdminToSchool(String adminUid, String schoolId);
   Future<Either<Failure, void>> deactivateAdmin(String adminUid);
 
-  // Pending admins (SSO approval flow)
+  // Manages pending admin approvals through the SSO onboarding process
   Stream<List<PendingAdmin>> watchPendingAdmins();
   Future<Either<Failure, void>> approvePendingAdmin({
     required String uid,
@@ -48,13 +48,13 @@ abstract class AdminRepository {
   });
   Future<Either<Failure, void>> rejectPendingAdmin(String uid);
 
-  // Report cleanup
+  // Handles automated report cleanup based on retention policies
   Future<Either<Failure, void>> cleanupOldReports({
     required String schoolId,
     required int retentionDays,
   });
 
-  // Reports
+  // Provides access to report management functionality including querying, filtering, and updating reports
   Stream<List<Report>> watchReportsForSchool(String schoolId);
   Stream<List<Report>> watchAllReports();
   Future<Either<Failure, Map<String, int>>> getReportStats(String? schoolId);

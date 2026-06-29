@@ -18,6 +18,7 @@ class StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Determine if we should use a row layout (wide screens) or grid (smaller screens)
         final isWide = constraints.maxWidth > 600;
         final cards = [
           _StatCard(label: 'Total Reports',  value: total,    color: Colors.blue,   icon: Icons.article_outlined),
@@ -27,6 +28,7 @@ class StatsRow extends StatelessWidget {
         ];
 
         if (isWide) {
+          // Use horizontal row layout on wide screens
           return Row(
             children: cards
                 .map((c) => Expanded(
@@ -38,6 +40,7 @@ class StatsRow extends StatelessWidget {
                 .toList(),
           );
         }
+        // Use grid layout on smaller screens
         return GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,

@@ -56,7 +56,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return BlocListener<SchoolCubit, SchoolState>(
       listener: (context, state) {
-        // When we know the admin's school, start the report stream
+        // Start the report stream when we know the admin's school
         if (state is SchoolLoaded) {
           if (state.admin.isSuperAdmin) {
             context.read<ReportCubit>().loadAllReports();
@@ -158,7 +158,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildBody(BuildContext context, SchoolState schoolState) {
-    if (schoolState is SchoolLoading || schoolState is SchoolInitial) {
+  if (schoolState is SchoolLoading || schoolState is SchoolInitial) {
       return const Center(child: CircularProgressIndicator());
     }
     if (schoolState is SchoolError) {
@@ -187,23 +187,22 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       );
     }
-
     return BlocListener<ReportCubit, ReportState>(
       listener: (context, state) {
-        if (state is ReportActionSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
         if (state is ReportActionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
               backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        if (state is ReportActionSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -241,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome + admin name
+              // Welcome message and admin name
               Text(
                 'Welcome, ${admin.name}',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -253,7 +252,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 24),
 
-              // Stats cards
+              // Statistics row
               StatsRow(
                 total: state.totalCount,
                 newCount: state.newCount,

@@ -168,7 +168,7 @@ class _GroupsPageState extends State<GroupsPage>
     );
   }
 
-  // ── Tab 1: existing groups ────────────────────────────────────────────────
+  // -- Tab 1: existing groups ------------------------------------------------
 
   Widget _buildGroupsTab(BuildContext context, GroupState state) {
     if (state is GroupLoading || state is GroupInitial) {
@@ -217,7 +217,7 @@ class _GroupsPageState extends State<GroupsPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Stat cards — same visual weight as dashboard StatsRow ─────────
+          // -- Stat cards � same visual weight as dashboard StatsRow ---------
           Row(
             children: [
               Expanded(
@@ -264,7 +264,7 @@ class _GroupsPageState extends State<GroupsPage>
 
           const SizedBox(height: 14),
 
-          // ── Filter pills ──────────────────────────────────────────────────
+          // -- Filter pills --------------------------------------------------
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -337,7 +337,7 @@ class _GroupsPageState extends State<GroupsPage>
     );
   }
 
-  // ── Tab 2: auto suggestions ───────────────────────────────────────────────
+  // -- Tab 2: auto suggestions -----------------------------------------------
 
   Widget _buildSuggestionsTab(BuildContext context, GroupState state) {
     if (state is GroupLoading || state is GroupInitial) {
@@ -373,7 +373,7 @@ class _GroupsPageState extends State<GroupsPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Info banner — same colour language as the rest of the app
+        // Info banner � same colour language as the rest of the app
         Container(
           color: const Color(0xFFF0F4FF),
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
@@ -415,7 +415,7 @@ class _GroupsPageState extends State<GroupsPage>
     );
   }
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // -- Actions ---------------------------------------------------------------
 
   void _openCreate(BuildContext context) {
     Navigator.pushNamed(
@@ -441,7 +441,7 @@ class _GroupsPageState extends State<GroupsPage>
   }
 }
 
-// ── Date helper ───────────────────────────────────────────────────────────────
+// -- Date helper ---------------------------------------------------------------
 
 String _fmtDate(DateTime dt) {
   const months = [
@@ -451,7 +451,7 @@ String _fmtDate(DateTime dt) {
   return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
 }
 
-// ── Stat card — mirrors the card style used in dashboard's StatsRow ───────────
+// -- Stat card � mirrors the card style used in dashboard's StatsRow -----------
 
 class _DashStatCard extends StatelessWidget {
   final String label;
@@ -523,7 +523,7 @@ class _DashStatCard extends StatelessWidget {
   }
 }
 
-// ── Sub-widgets ───────────────────────────────────────────────────────────────
+// -- Sub-widgets ---------------------------------------------------------------
 
 class _SuggestionBadge extends StatelessWidget {
   final int count;
@@ -582,7 +582,7 @@ class _SuggestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────────────────────────
+          // -- Header ------------------------------------------------------
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
@@ -674,7 +674,7 @@ class _SuggestionCard extends StatelessWidget {
                 _MetaChip(
                   icon: Icons.calendar_today_outlined,
                   label:
-                      '${_fmtDate(suggestion.earliest)} – ${_fmtDate(suggestion.latest)}',
+                      '${_fmtDate(suggestion.earliest)} � ${_fmtDate(suggestion.latest)}',
                 ),
                 _MetaChip(
                   icon: Icons.schedule_outlined,
@@ -716,7 +716,7 @@ class _ReportRow extends StatelessWidget {
                         fontSize: 13, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
                 Text(
-                  '${_fmtDate(report.submittedAt)}  ·  ${_categoryLabel(report.category)}',
+                  '${_fmtDate(report.submittedAt)}  �  ${_categoryLabel(report.category)}',
                   style: TextStyle(
                       fontSize: 11, color: Colors.grey.shade500),
                 ),

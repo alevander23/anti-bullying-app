@@ -25,6 +25,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
   @override
   void initState() {
     super.initState();
+    // Initialize state based on the report data passed from the parent
     _selectedStatus = widget.report.status;
     _notesController.text = widget.report.notes ?? '';
   }
@@ -49,7 +50,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
+            // Handle for dragging the sheet
             Center(
               child: Container(
                 width: 40,
@@ -62,7 +63,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
               ),
             ),
 
-            // Header row
+            // Header row with report title and flag toggle
             Row(
               children: [
                 Expanded(
@@ -70,7 +71,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
                 ),
-                // Flag toggle
+                // Flag toggle button for marking report as flagged
                 IconButton(
                   icon: Icon(
                     report.isFlagged ? Icons.flag : Icons.flag_outlined,
@@ -88,7 +89,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
             ),
             const SizedBox(height: 8),
 
-            // Meta chips
+            // Display metadata as chips (category, priority, etc)
             Wrap(
               spacing: 8,
               children: [
@@ -123,7 +124,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
             const Divider(),
             const SizedBox(height: 12),
 
-            // Description
+            // Report description section
             const Text('Description',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
@@ -131,7 +132,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
                 style: const TextStyle(height: 1.5, fontSize: 15)),
             const SizedBox(height: 24),
 
-            // Status selector
+            // Status selection for updating report status
             const Text('Update Status',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
@@ -148,7 +149,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Notes
+            // Internal notes input field
             const Text('Internal Notes',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
@@ -164,7 +165,7 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Save button
+            // Save changes button
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -186,9 +187,11 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
     final adminUid = widget.admin.id;
     final adminName = widget.admin.name;
 
+    // Update status if changed
     if (_selectedStatus != widget.report.status) {
       cubit.updateStatus(widget.report.id, _selectedStatus, adminUid, adminName);
     }
+    // Update notes if changed
     if (_notesController.text != (widget.report.notes ?? '')) {
       cubit.addNotes(widget.report.id, _notesController.text, adminUid);
     }

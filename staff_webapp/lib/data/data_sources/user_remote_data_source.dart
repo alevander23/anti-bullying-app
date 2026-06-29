@@ -8,15 +8,17 @@ class UserRemoteDataSource {
   final FirebaseDatabase _database;
 
   // Realtime Database node: /users/{uid}
+  // This structure allows per-user data storage and retrieval
   static const String _usersNode = 'users';
 
   UserRemoteDataSource({
     required fb.FirebaseAuth firebaseAuth,
     FirebaseDatabase? database,
-  })  : _firebaseAuth = firebaseAuth,
+  })  // Database is optional, defaulting to FirebaseDatabase.instance
+      : _firebaseAuth = firebaseAuth,
         _database = database ?? FirebaseDatabase.instance;
 
-  // Get current user profile
+  // Retrieves the current user's profile from Firebase Authentication and Realtime Database
 
   Future<UserModel?> getCurrentUser() async {
     final fbUser = _firebaseAuth.currentUser;
@@ -24,7 +26,7 @@ class UserRemoteDataSource {
     return _fetchOrCreateProfile(fbUser);
   }
 
-  // Email/password login
+  // Handles email/password login using Firebase Authentication
 
   Future<UserModel?> login(String email, String password) async {
     final credential = await _firebaseAuth.signInWithEmailAndPassword(
@@ -36,6 +38,8 @@ class UserRemoteDataSource {
     return _fetchOrCreateProfile(fbUser);
   }
 
+  // Handles Microsoft SSO login using Firebase Authentication
+
   Future<UserModel?> signInWithMicrosoft() async {
     final fbUser = _firebaseAuth.currentUser;
     if (fbUser == null) return null;
@@ -46,6 +50,7 @@ class UserRemoteDataSource {
 
   /// Reads the user profile from /users/{uid}.
   /// If no profile exists yet (first SSO login), creates one automatically.
+  /// Merges Firebase user data with database-stored values when available
   Future<UserModel?> _fetchOrCreateProfile(
     fb.User fbUser, {
     AuthProvider provider = AuthProvider.unknown,
@@ -75,6 +80,7 @@ class UserRemoteDataSource {
   }
 
   /// Writes (or overwrites) a user profile node in Realtime Database.
+  /// Used to initialize or update user data during login/registration
   Future<void> _writeProfile(fb.User fbUser, {required AuthProvider provider}) async {
     final ref = _database.ref('$_usersNode/${fbUser.uid}');
     await ref.set({

@@ -8,6 +8,7 @@ import 'package:staff_webapp/domain/use_cases/use_case.dart';
 import 'package:staff_webapp/domain/repository_contracts/auth_repository.dart';
 import 'package:staff_webapp/presentation/bloc/auth_state.dart';
 
+/// Bloc for managing authentication state throughout the app
 class AuthCubit extends Cubit<AuthState> {
   final SignInWithMicrosoft _microsoftUseCase;
   final SignOutUseCase _signOutUseCase;
@@ -31,6 +32,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   // Startup: restore session
 
+  /// Checks if there's an existing user session to restore
   Future<void> checkCurrentUser() async {
     emit(const AuthLoading());
     final result = await _getCurrentUserUseCase(const NoParams());
@@ -44,6 +46,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   // Sign in
 
+  /// Initiates Microsoft sign-in flow
   Future<void> signInWithMicrosoft() async {
     emit(const AuthLoading());
     final result = await _microsoftUseCase(const NoParams());
@@ -53,8 +56,9 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  //Sign out
+  // Sign out
 
+  /// Triggers sign-out process and clears user session
   Future<void> signOut() async {
     emit(const AuthLoading());
     final result = await _signOutUseCase(const NoParams());
@@ -86,6 +90,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   // Helpers
 
+  /// Handles specific failure cases and emits appropriate states
   void _handleFailure(Failure failure) {
     if (failure is MicrosoftAuthFailure && failure.errorCode == 'cancelled-by-user') {
       emit(const AuthInitial());

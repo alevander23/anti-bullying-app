@@ -52,6 +52,7 @@ class SchoolCubit extends Cubit<SchoolState> {
 
   /// Checks if a cleanup has already run today; if not, fetches school settings
   /// and runs the cleanup if a retention period is configured.
+  /// This is a best-effort operation that should not block UI or user actions.
   Future<void> _maybeRunDailyCleanup(String schoolId) async {
     final schoolResult = await _repository.getSchool(schoolId);
     schoolResult.fold(
@@ -81,6 +82,8 @@ class SchoolCubit extends Cubit<SchoolState> {
     );
   }
 
+  /// Creates a new school with the given name and address.
+  /// Emits success or error state based on repository response.
   Future<void> createSchool(String name, String address) async {
     final result = await _repository.createSchool(name: name, address: address);
     result.fold(
@@ -89,6 +92,8 @@ class SchoolCubit extends Cubit<SchoolState> {
     );
   }
 
+  /// Assigns an admin to a school.
+  /// Emits success or error state based on repository response.
   Future<void> assignAdminToSchool(String adminUid, String schoolId) async {
     final result = await _repository.assignAdminToSchool(adminUid, schoolId);
     result.fold(

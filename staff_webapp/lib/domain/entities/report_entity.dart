@@ -1,10 +1,14 @@
+/// Enum representing the possible statuses of a report in the domain layer.
 enum ReportStatus { newReport, reviewed, escalated, resolved }
+/// Enum representing the priority level of a report.
 enum ReportPriority { normal, high }
+/// Enum representing the category of a report.
 enum ReportCategory { bullying, harassment, safety, other }
 
 /// Which Firestore field to sort the report list by.
 enum ReportSortField { updatedAt, submittedAt }
 
+/// Domain entity representing a report, encapsulating all necessary data and behavior.
 class Report {
   final String id;
   final String schoolId;
@@ -42,9 +46,15 @@ class Report {
     this.bullyNames = const [],
   });
 
-  bool get isNew        => status == ReportStatus.newReport;
+  /// Returns true if the report is in the 'newReport' status.
+  bool get isNew => status == ReportStatus.newReport;
+
+  /// Returns true if the report has high priority or is flagged.
+  /// High priority or flagged reports require urgent attention.
   bool get isHighPriority => priority == ReportPriority.high || isFlagged;
 
+  /// Creates a copy of this report with optional updates.
+  /// Use clearResolvedBy and clearClosedAt flags to explicitly clear those fields.
   Report copyWith({
     ReportStatus? status,
     ReportPriority? priority,

@@ -54,7 +54,7 @@ class ReportTable extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Column(
           children: [
-            // Header
+            // Header with dynamic column titles based on sort field
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               color: Colors.grey.shade50,
@@ -77,7 +77,7 @@ class ReportTable extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            // Rows
+            // Render each report row with separator
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -86,7 +86,7 @@ class ReportTable extends StatelessWidget {
               itemBuilder: (context, i) =>
                   _ReportRow(report: reports[i], sortField: sortField, onTap: onReportTap),
             ),
-            // Load more trigger row
+            // Show load more indicator if additional reports exist
             if (hasMore)
               const _LoadMoreRow(),
           ],
@@ -118,7 +118,7 @@ class _ReportRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            // Title + flag indicator
+            // Title with flag/priority indicators
             Expanded(
               flex: 3,
               child: Row(
@@ -158,7 +158,7 @@ class _ReportRow extends StatelessWidget {
                 ],
               ),
             ),
-            // Category
+            // Category label
             Expanded(
               flex: 1,
               child: Text(
@@ -166,12 +166,12 @@ class _ReportRow extends StatelessWidget {
                 style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),
-            // Status badge
+            // Status indicator badge
             Expanded(
               flex: 1,
               child: _StatusBadge(status: report.status),
             ),
-            // Date
+            // Date value based on sort field
             Expanded(
               flex: 1,
               child: Text(
@@ -181,7 +181,7 @@ class _ReportRow extends StatelessWidget {
                 style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),
-            // Arrow
+            // Right arrow for navigation
             const Icon(Icons.chevron_right, color: Colors.grey),
           ],
         ),

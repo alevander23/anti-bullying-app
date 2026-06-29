@@ -27,6 +27,7 @@ class _ReportPickerPageState extends State<ReportPickerPage> {
     _selected = Set.from(widget.selectedIds);
   }
 
+  // Returns the filtered list of reports based on the search query
   List<Report> get _filtered {
     if (_search.isEmpty) return widget.allReports;
     final q = _search.toLowerCase();
@@ -191,6 +192,7 @@ class _PickerRow extends StatelessWidget {
     );
   }
 
+  // Returns the category label based on the report category
   String _categoryLabel(ReportCategory c) => switch (c) {
     ReportCategory.bullying   => 'Bullying',
     ReportCategory.harassment => 'Harassment',
@@ -198,6 +200,7 @@ class _PickerRow extends StatelessWidget {
     ReportCategory.other      => 'Other',
   };
 
+  // Returns a human-readable time ago string based on the report submission date
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inDays >= 14) return '${(diff.inDays / 7).floor()}w ago';

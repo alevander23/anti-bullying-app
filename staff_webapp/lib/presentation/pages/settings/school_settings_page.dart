@@ -35,7 +35,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
         _focusedSchoolId = admin.schoolId;
         context.read<SettingsCubit>().loadForSuperAdmin(_focusedSchoolId!);
       } else {
-        // Super admin with no school assigned — load everything, no focused school
+        // Super admin with no school assigned - load everything, no focused school
         context.read<SettingsCubit>().loadForSuperAdminNoSchool();
       }
     } else {
@@ -141,7 +141,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     }
   }
 
-  // ─── Regular admin layout ─────────────────────────────────────────────────
+  // --- Regular admin layout -------------------------------------------------
 
   Widget _buildAdminLayout(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -171,7 +171,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     ]);
   }
 
-  // ─── Super admin layout ───────────────────────────────────────────────────
+  // --- Super admin layout ---------------------------------------------------
 
   Widget _buildSuperAdminLayout(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -260,7 +260,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Pending approvals card ───────────────────────────────────────────────
+  // --- Pending approvals card -----------------------------------------------
 
   Widget _pendingApprovalsCard(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -350,7 +350,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── School info card ─────────────────────────────────────────────────────
+  // --- School info card -----------------------------------------------------
 
   Widget _schoolInfoCard(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -371,7 +371,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
         _infoRow('Name', data.school.name),
         const Divider(height: 24),
         _infoRow('Address',
-            data.school.address.isEmpty ? '—' : data.school.address),
+            data.school.address.isEmpty ? '-' : data.school.address),
         const Divider(height: 24),
         _infoRow('Status', data.school.isActive ? 'Active' : 'Inactive',
             valueColor: data.school.isActive
@@ -398,7 +398,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Retention card ───────────────────────────────────────────────────────
+  // --- Retention card -------------------------------------------------------
 
   Widget _retentionCard(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -464,12 +464,12 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Auto-grouping window card ────────────────────────────────────────────
+  // --- Auto-grouping window card --------------------------------------------
 
   Widget _autoGroupCard(
       BuildContext context, SettingsLoaded data, bool isLoading) {
     final currentDays = data.school.autoGroupWindowDays;
-    // Sensible preset options (1–14 days)
+    // Sensible preset options (1-14 days)
     const options = [1, 2, 3, 5, 7, 10, 14];
 
     return _card(
@@ -530,7 +530,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Admins card (this school) ────────────────────────────────────────────
+  // --- Admins card (this school) --------------------------------------------
 
   Widget _adminsCard(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -620,7 +620,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Global admins card (super admin only) ────────────────────────────────
+  // --- Global admins card (super admin only) --------------------------------
 
   Widget _globalAdminsCard(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -730,7 +730,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── School sidebar ───────────────────────────────────────────────────────
+  // --- School sidebar -------------------------------------------------------
 
   Widget _schoolSidebar(
       BuildContext context, SettingsLoaded data, bool isLoading) {
@@ -845,7 +845,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Dialogs ──────────────────────────────────────────────────────────────
+  // --- Dialogs --------------------------------------------------------------
 
   void _showInviteAdminDialog(BuildContext context, SettingsLoaded data,
       {String? fixedSchoolId}) {
@@ -1303,7 +1303,7 @@ class _SchoolSettingsPageState extends State<SchoolSettingsPage> {
     );
   }
 
-  // ─── Shared helpers ───────────────────────────────────────────────────────
+  // --- Shared helpers -------------------------------------------------------
 
   SettingsLoaded? _extractLoaded(SettingsState state) {
     if (state is SettingsLoaded) return state;

@@ -5,37 +5,38 @@ abstract class AuthState {
   const AuthState();
 }
 
-/// App has just started session check in progress
+/// Initial state before authentication checks begin
 class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
-/// Actively checking the session or performing a sign-in / sign-out
+/// Transient state indicating authentication process is active
 class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// User signed in via a button tap
+/// Authentication successful via user-initiated action
 class AuthSuccess extends AuthState {
   final User user;
   const AuthSuccess(this.user);
 }
 
-/// Session was restored on cold start
+/// Authentication restored automatically on app launch
 class AuthSessionRestored extends AuthState {
   final User user;
   const AuthSessionRestored(this.user);
 }
 
-/// No authenticated user, route to login screen
+/// No active session - triggers navigation to login screen
 class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
 
-/// Something went wrong. Message comes from the typed Failure
+/// Error state with typed failure for UI display
 class AuthError extends AuthState {
   final Failure failure;
   const AuthError(this.failure);
 
+  /// Returns the error message from the failure
   String get message => failure.message;
 }

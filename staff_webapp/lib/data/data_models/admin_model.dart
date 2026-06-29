@@ -13,6 +13,8 @@ class AdminModel extends Admin {
     required super.createdAt,
   });
 
+  // Factory constructor to create an AdminModel from a Firestore document
+  // Maps Firestore fields to AdminModel properties, providing default values where necessary
   factory AdminModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return AdminModel(
@@ -28,6 +30,8 @@ class AdminModel extends Admin {
     );
   }
 
+  // Converts an AdminModel instance to a Firestore document map
+  // Maps AdminModel properties to Firestore fields, using a server timestamp for the creation date
   Map<String, dynamic> toFirestore() => {
     'email': email,
     'name': name,

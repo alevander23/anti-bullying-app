@@ -3,11 +3,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:staff_webapp/core/error/failures.dart';
-import 'package:staff_webapp/data/data_models/group_model.dart';
 import 'package:staff_webapp/data/data_sources/group_remote_data_source.dart';
 import 'package:staff_webapp/domain/entities/group_entity.dart';
 import 'package:staff_webapp/domain/repository_contracts/group_repository.dart';
 
+/// Concrete implementation of [GroupRepository] using [GroupRemoteDataSource]
+/// to handle data access and convert exceptions to domain-level failures.
 class GroupRepositoryImpl implements GroupRepository {
   final GroupRemoteDataSource _dataSource;
 
@@ -52,6 +53,9 @@ class GroupRepositoryImpl implements GroupRepository {
           String groupId) =>
       _run(() => _dataSource.getTimeline(groupId));
 
+  /// Wraps any future operation, converting exceptions to domain-level failures.
+  /// Handles Firebase-specific errors like permission issues and general
+  /// Firestore failures, falling back to a generic unexpected failure.
   Future<Either<Failure, T>> _run<T>(Future<T> Function() fn) async {
     try {
       return Right(await fn());

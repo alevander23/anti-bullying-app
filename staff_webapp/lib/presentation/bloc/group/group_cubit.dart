@@ -18,6 +18,7 @@ class GroupCubit extends Cubit<GroupState> {
 
   // ── Load ──────────────────────────────────────────────────────────────────
 
+  /// Loads groups for a given school ID.
   Future<void> loadGroups(String? schoolId) async {
     _schoolId = schoolId;
     emit(const GroupLoading());
@@ -31,6 +32,7 @@ class GroupCubit extends Cubit<GroupState> {
     );
   }
 
+  /// Loads detailed information for a specific group.
   Future<void> loadGroupDetail(String groupId) async {
     emit(GroupDetailLoading(groupId));
     final groupResult = await _repository.getGroup(groupId);
@@ -47,6 +49,7 @@ class GroupCubit extends Cubit<GroupState> {
     );
   }
 
+  /// Sets the status filter for the loaded groups.
   void setStatusFilter(GroupStatus? status) {
     if (state is GroupLoaded) {
       final s = state as GroupLoaded;
@@ -54,6 +57,7 @@ class GroupCubit extends Cubit<GroupState> {
     }
   }
 
+  /// Computes group suggestions based on a list of reports.
   void computeSuggestions(List<Report> allReports, {int windowDays = 5}) {
     // Only consider reports that name at least one bully.
     final withBullies = allReports.where((r) => r.bullyNames.isNotEmpty).toList();
@@ -107,12 +111,12 @@ class GroupCubit extends Cubit<GroupState> {
       }
     }
 
-    // Filter to only clusters with ≥2 reports (single reports aren't interesting).
+    // Filter clusters to only include those with more than one report.
     // Also skip clusters whose report IDs are all already covered by an existing group.
-    final existingReportIds = _groups
+	final existingReportIds = _groups
         .expand((g) => g.connectedReportIds)
-        .toSet();
-
+        .toSet();   
+        
     _suggestions = clusters
         .where((c) => c.reports.length >= 2)
         .where((c) => c.reports.any((r) => !existingReportIds.contains(r.id)))
@@ -193,6 +197,7 @@ class GroupCubit extends Cubit<GroupState> {
 
   // ── Create ────────────────────────────────────────────────────────────────
 
+  /// Creates a new group.
   Future<String?> createGroup(IncidentGroup group) async {
     final result = await _repository.createGroup(group);
     return result.fold(
@@ -210,6 +215,7 @@ class GroupCubit extends Cubit<GroupState> {
 
   // ── Update ────────────────────────────────────────────────────────────────
 
+  /// Updates an existing group.
   Future<void> updateGroup({
     required String groupId,
     required IncidentGroup original,
@@ -284,6 +290,7 @@ class GroupCubit extends Cubit<GroupState> {
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
+  /// Deletes a group by its ID.
   Future<void> deleteGroup(String groupId) async {
     final result = await _repository.deleteGroup(groupId);
     result.fold(
@@ -298,19 +305,23 @@ class GroupCubit extends Cubit<GroupState> {
 
   // ── Back to list ──────────────────────────────────────────────────────────
 
+  /// Emits the current list of groups and suggestions.
   void backToList() => emit(GroupLoaded(groups: _groups, suggestions: _suggestions));
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
+  /// Returns the label for a given group status.
   String _statusLabel(GroupStatus s) => switch (s) {
     GroupStatus.open        => 'open',
     GroupStatus.underReview => 'under review',
     GroupStatus.closed      => 'closed',
   };
 
+  /// Returns the label for a given group priority.
   String _priorityLabel(GroupPriority p) =>
       p == GroupPriority.high ? 'high' : 'normal';
 
+  /// Capitalizes the first letter of a string.
   String _capitalize(String s) => s.isEmpty
       ? s
       : s[0].toUpperCase() + s.substring(1);

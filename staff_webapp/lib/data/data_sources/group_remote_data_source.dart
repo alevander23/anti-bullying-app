@@ -10,13 +10,16 @@ class GroupRemoteDataSource {
   GroupRemoteDataSource({required FirebaseFirestore firestore})
       : _firestore = firestore;
 
+  // Convenience property for accessing the groups collection
   CollectionReference get _groups => _firestore.collection('groups');
 
+  // Returns the timeline subcollection for a specific group
   CollectionReference _timeline(String groupId) =>
       _groups.doc(groupId).collection('timeline');
 
   // ── Read ──────────────────────────────────────────────────────────────────
 
+  // Retrieves all groups associated with a specific school, ordered by most recent update
   Future<List<IncidentGroup>> getGroupsForSchool(String schoolId) async {
     final snap = await _groups
         .where('schoolId', isEqualTo: schoolId)
@@ -25,6 +28,7 @@ class GroupRemoteDataSource {
     return snap.docs.map(GroupModel.fromFirestore).toList();
   }
 
+  // Retrieves all groups, ordered by most recent update
   Future<List<IncidentGroup>> getAllGroups() async {
     final snap = await _groups
         .orderBy('updatedAt', descending: true)
@@ -32,12 +36,14 @@ class GroupRemoteDataSource {
     return snap.docs.map(GroupModel.fromFirestore).toList();
   }
 
+  // Retrieves a single group by ID, returns null if not found
   Future<IncidentGroup?> getGroup(String groupId) async {
     final doc = await _groups.doc(groupId).get();
     if (!doc.exists) return null;
     return GroupModel.fromFirestore(doc);
   }
 
+  // Retrieves timeline entries for a specific group, ordered by timestamp
   Future<List<GroupTimelineEntry>> getTimeline(String groupId) async {
     final snap = await _timeline(groupId)
         .orderBy('timestamp', descending: true)
@@ -55,6 +61,7 @@ class GroupRemoteDataSource {
 
   // ── Write ─────────────────────────────────────────────────────────────────
 
+  // Creates a new group and initializes its timeline with a creation event
   Future<String> createGroup(IncidentGroup group) async {
     final ref = await _groups.add(GroupModel.toFirestore(group));
     // Write the initial timeline entry
@@ -67,15 +74,19 @@ class GroupRemoteDataSource {
     return ref.id;
   }
 
+  // Updates an existing group with new data
   Future<void> updateGroup(String groupId, Map<String, dynamic> data) =>
       _groups.doc(groupId).update(data);
 
+  // Deletes a group and its associated data
   Future<void> deleteGroup(String groupId) =>
       _groups.doc(groupId).delete();
 
+  // Adds a new timeline entry to a group's timeline
   Future<void> addTimelineEntry(String groupId, GroupTimelineEntry entry) =>
       _addTimelineEntry(groupId, entry);
 
+  // Internal method to add a timeline entry with server timestamp
   Future<void> _addTimelineEntry(
       String groupId, GroupTimelineEntry entry) async {
     await _timeline(groupId).add({

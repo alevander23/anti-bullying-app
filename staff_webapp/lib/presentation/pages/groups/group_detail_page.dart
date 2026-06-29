@@ -177,7 +177,7 @@ class _GroupDetailPageState extends State<GroupDetailPage>
   }
 }
 
-// ── Overview tab ──────────────────────────────────────────────────────────────
+// -- Overview tab --------------------------------------------------------------
 
 class _OverviewTab extends StatelessWidget {
   final IncidentGroup group;
@@ -288,7 +288,7 @@ class _OverviewTab extends StatelessWidget {
   static const _months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 }
 
-// ── Reports tab ───────────────────────────────────────────────────────────────
+// -- Reports tab ---------------------------------------------------------------
 
 class _ReportsTab extends StatelessWidget {
   final IncidentGroup group;
@@ -317,7 +317,7 @@ class _ReportsTab extends StatelessWidget {
   }
 }
 
-// ── Timeline tab ──────────────────────────────────────────────────────────────
+// -- Timeline tab --------------------------------------------------------------
 
 class _TimelineTab extends StatelessWidget {
   final List<GroupTimelineEntry> timeline;
@@ -377,7 +377,7 @@ class _TimelineTab extends StatelessWidget {
                           style: const TextStyle(fontSize: 13, height: 1.5)),
                       const SizedBox(height: 3),
                       Text(
-                        '${_formatDateTime(entry.timestamp)} · ${entry.adminName}',
+                        '${_formatDateTime(entry.timestamp)} � ${entry.adminName}',
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                       ),
                     ],
@@ -399,7 +399,7 @@ class _TimelineTab extends StatelessWidget {
   }
 }
 
-// ── Shared detail widgets ─────────────────────────────────────────────────────
+// -- Shared detail widgets -----------------------------------------------------
 
 class _DetailCard extends StatelessWidget {
   final String? title;
@@ -463,7 +463,7 @@ class _PersonRow extends StatelessWidget {
           ),
           if (person.notes != null && person.notes!.isNotEmpty) ...[
             const SizedBox(width: 8),
-            Flexible(child: Text('— ${person.notes}',
+            Flexible(child: Text('� ${person.notes}',
                 style: TextStyle(fontSize: 11, color: Colors.grey.shade500))),
           ],
         ],
@@ -589,7 +589,7 @@ class _FullReportTile extends StatelessWidget {
                     children: [
                       Text(_categoryLabel(report.category),
                           style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-                      Text(' · ', style: TextStyle(color: Colors.grey.shade400)),
+                      Text(' � ', style: TextStyle(color: Colors.grey.shade400)),
                       _StatusPill(status: report.status),
                     ],
                   ),

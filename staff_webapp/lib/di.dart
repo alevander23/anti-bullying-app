@@ -37,7 +37,7 @@ final getIt = GetIt.instance;
 Future<void> setupDependencies() async {
   final firebaseApp = Firebase.app();
 
-  // Firebase singletons
+  // Register Firebase singletons - these are shared across the app and should not be recreated
   getIt.registerSingleton<FirebaseAuth>(
     FirebaseAuth.instanceFor(app: firebaseApp),
   );
@@ -51,6 +51,7 @@ Future<void> setupDependencies() async {
     FirebaseFirestore.instanceFor(app: firebaseApp),
   );
 
+  // Register data layer remote data sources - implementations that interact with Firebase
   getIt.registerSingleton<UserRemoteDataSource>(
     UserRemoteDataSource(
       firebaseAuth: getIt<FirebaseAuth>(),
@@ -74,7 +75,7 @@ Future<void> setupDependencies() async {
     GroupRemoteDataSource(firestore: getIt<FirebaseFirestore>()),
   );
 
-  // Repositories
+  // Register domain layer repositories - implementations that use data sources
   getIt.registerSingleton<UserRepository>(
     UserRepositoryImpl(getIt<UserRemoteDataSource>()),
   );
@@ -91,7 +92,7 @@ Future<void> setupDependencies() async {
     GroupRepositoryImpl(getIt<GroupRemoteDataSource>()),
   );
 
-  // Use cases
+  // Register domain layer use cases - business logic that uses repositories
   getIt.registerSingleton<LoginUseCase>(
     LoginUseCase(getIt<UserRepository>()),
   );
@@ -105,7 +106,7 @@ Future<void> setupDependencies() async {
     GetCurrentUserUseCase(getIt<AuthRepository>()),
   );
 
-  // Cubits
+  // Register presentation layer blocs - UI state management
   getIt.registerSingleton<AuthCubit>(
     AuthCubit(
       microsoftUseCase: getIt<SignInWithMicrosoft>(),

@@ -14,6 +14,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
+    // Trigger auth check after widget is fully built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthCubit>().checkCurrentUser();
     });
@@ -23,6 +24,7 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
+        // Handle navigation based on authentication state
         if (state is AuthSessionRestored || state is AuthSuccess) {
           final user = state is AuthSuccess
               ? state.user
@@ -38,6 +40,7 @@ class _SplashPageState extends State<SplashPage> {
         }
       },
       child: const Scaffold(
+        // Show loading indicator while checking authentication status
         body: Center(child: CircularProgressIndicator()),
       ),
     );

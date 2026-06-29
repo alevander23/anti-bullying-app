@@ -7,7 +7,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:staff_webapp/core/error/failures.dart';
 
+/// Abstract base class for all use cases in the domain layer. Enforces a consistent
+/// structure where use cases accept parameters and return either a success value
+/// or a failure, ensuring type-safe error handling.
 abstract class UseCase<Type, Params> {
+  // Executes the use case with the provided parameters.
   Future<Either<Failure, Type>> call(Params params);
 }
 

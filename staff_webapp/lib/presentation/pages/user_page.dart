@@ -6,6 +6,7 @@ class UserPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Main UI structure for user profile and actions
       appBar: AppBar(
         title: const Text("User Page"),
         backgroundColor: Colors.blueAccent,
@@ -37,13 +38,14 @@ class UserPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
-            // Actions
+            // Section header for user actions
             const Text(
               "Actions",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
+            // List of user actions
             ListTile(
               leading: const Icon(Icons.lock),
               title: const Text("Change Password"),

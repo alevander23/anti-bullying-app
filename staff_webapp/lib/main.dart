@@ -58,6 +58,7 @@ class MyApp extends StatelessWidget {
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/groups') {
+            // Route for group list page with admin context and report data
             final args = settings.arguments as Map<String, dynamic>;
             final admin = args['admin'] as Admin;
             final allReports = args['allReports'] as List<Report>;
@@ -79,6 +80,7 @@ class MyApp extends StatelessWidget {
             );
           }
           if (settings.name == '/groups/detail') {
+            // Route for group detail page with specific group data
             final args = settings.arguments as Map<String, dynamic>;
             final groupId = args['groupId'] as String;
             final admin = args['admin'] as Admin;
@@ -101,6 +103,7 @@ class MyApp extends StatelessWidget {
             );
           }
           if (settings.name == '/groups/detail/edit') {
+            // Route for editing an existing group
             final args = settings.arguments as Map<String, dynamic>;
             final admin = args['admin'] as Admin;
             final allReports = args['allReports'] as List<Report>;
@@ -119,6 +122,7 @@ class MyApp extends StatelessWidget {
             );
           }
           if (settings.name == '/groups/create') {
+            // Route for creating a new group
             final args = settings.arguments as Map<String, dynamic>;
             final admin = args['admin'] as Admin;
             final allReports = args['allReports'] as List<Report>;

@@ -17,7 +17,7 @@ class WaitingPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Icon
+                // Visual indicator for waiting state
                 Container(
                   width: 72,
                   height: 72,
@@ -68,7 +68,7 @@ class WaitingPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Try again button — re-checks auth in case they were approved
+                // Re-check approval status
                 FilledButton.icon(
                   onPressed: () => context.read<AuthCubit>().checkCurrentUser(),
                   icon: const Icon(Icons.refresh, size: 17),

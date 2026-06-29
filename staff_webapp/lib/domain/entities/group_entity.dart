@@ -3,6 +3,7 @@
 enum GroupStatus { open, underReview, closed }
 enum GroupPriority { normal, high }
 
+/// Represents a person involved in an incident group, including their role and notes.
 class PersonInvolved {
   final String name;
   final String role; // 'Student', 'Staff', 'Other'
@@ -14,6 +15,7 @@ class PersonInvolved {
     this.notes,
   });
 
+  /// Creates a copy of this object with optional updates to its properties.
   PersonInvolved copyWith({String? name, String? role, String? notes}) =>
       PersonInvolved(
         name: name ?? this.name,
@@ -22,6 +24,7 @@ class PersonInvolved {
       );
 }
 
+/// Represents a timeline entry for an incident group, capturing administrative actions.
 class GroupTimelineEntry {
   final String id;
   final String message;
@@ -36,6 +39,7 @@ class GroupTimelineEntry {
   });
 }
 
+/// Encapsulates all details of an incident group, including status, priority, involved people, and related reports.
 class IncidentGroup {
   final String id;
   final String schoolId;
@@ -69,6 +73,7 @@ class IncidentGroup {
     required this.updatedAt,
   });
 
+  /// Creates a copy of this object with optional updates to its properties.
   IncidentGroup copyWith({
     String? title,
     String? description,

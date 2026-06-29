@@ -20,33 +20,43 @@ class AuthFailure extends Failure {
   const AuthFailure(super.message);
 }
 
+// Microsoft authentication specific failures
 class MicrosoftAuthFailure extends AuthFailure {
   final String? errorCode;
   const MicrosoftAuthFailure(super.message, {this.errorCode});
 }
 
+// Failure related to signing out
 class SignOutFailure extends Failure {
   const SignOutFailure(super.message);
 }
 
+// Generic network-related failures
 class NetworkFailure extends Failure {
   const NetworkFailure([super.message = 'No internet connection']);
 }
 
+// Fallback for unhandled errors
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure([super.message = 'An unexpected error occurred']);
 }
 
-// Admin System
+// Admin System related failures
 class PermissionFailure extends Failure {
   const PermissionFailure([super.message = 'You do not have permission to perform this action']);
 }
+
+// Failure when a requested resource is not found
 class NotFoundFailure extends Failure {
   const NotFoundFailure([super.message = 'The requested resource was not found']);
 }
+
+// Failure when a user does not have access to a school's data
 class SchoolAccessFailure extends Failure {
   const SchoolAccessFailure([super.message = 'You do not have access to this school\'s data']);
 }
+
+// Firestore operation failures
 class FirestoreFailure extends Failure {
   const FirestoreFailure(super.message);
 }

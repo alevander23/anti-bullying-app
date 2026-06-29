@@ -22,6 +22,7 @@ class ReportModel extends Report {
     super.bullyNames = const [],
   });
 
+  // Converts a Firestore document snapshot into a ReportModel instance
   factory ReportModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ReportModel(
@@ -49,6 +50,7 @@ class ReportModel extends Report {
     );
   }
 
+  // Converts a ReportModel instance into a Firestore-compatible map
   Map<String, dynamic> toFirestore() => {
     'schoolId': schoolId,
     'title': title,
@@ -68,7 +70,7 @@ class ReportModel extends Report {
     'deviceIdentifier': deviceIdentifier,
   };
 
-  // Update map — only fields that can change after creation
+  // Builds a map of only the fields that can be updated after initial creation
   static Map<String, dynamic> toUpdateMap({
     ReportStatus? status,
     ReportPriority? priority,
@@ -104,6 +106,7 @@ class ReportModel extends Report {
     return map;
   }
 
+  // Parses a Firestore status string into a ReportStatus enum
   static ReportStatus _parseStatus(String? s) => switch (s) {
     FirestoreConstants.statusReviewed  => ReportStatus.reviewed,
     FirestoreConstants.statusEscalated => ReportStatus.escalated,
@@ -111,6 +114,7 @@ class ReportModel extends Report {
     _                                  => ReportStatus.newReport,
   };
 
+  // Converts a ReportStatus enum into a Firestore-compatible status string
   static String _statusToString(ReportStatus s) => switch (s) {
     ReportStatus.newReport  => FirestoreConstants.statusNew,
     ReportStatus.reviewed   => FirestoreConstants.statusReviewed,
@@ -118,6 +122,7 @@ class ReportModel extends Report {
     ReportStatus.resolved   => FirestoreConstants.statusResolved,
   };
 
+  // Parses a Firestore category string into a ReportCategory enum
   static ReportCategory _parseCategory(String? s) => switch (s) {
     FirestoreConstants.categoryBullying   => ReportCategory.bullying,
     FirestoreConstants.categoryHarassment => ReportCategory.harassment,
@@ -125,6 +130,7 @@ class ReportModel extends Report {
     _                                     => ReportCategory.other,
   };
 
+  // Converts a ReportCategory enum into a Firestore-compatible category string
   static String _categoryToString(ReportCategory c) => switch (c) {
     ReportCategory.bullying   => FirestoreConstants.categoryBullying,
     ReportCategory.harassment => FirestoreConstants.categoryHarassment,

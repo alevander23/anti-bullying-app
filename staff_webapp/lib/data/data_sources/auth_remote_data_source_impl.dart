@@ -9,7 +9,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final fb.FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
 
-  static const String _tenantId = 'common';
+  static const String _tenantId = 'common'; // Default tenant for Microsoft auth
 
   AuthRemoteDataSourceImpl({
     required fb.FirebaseAuth firebaseAuth,
@@ -20,7 +20,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> signInWithMicrosoft() async {
     final provider = fb.OAuthProvider('microsoft.com')
-      ..setCustomParameters({'tenant': _tenantId})
+      ..setCustomParameters({'tenant': _tenantId}) // Set tenant for Microsoft login
       ..addScope('email')
       ..addScope('openid')
       ..addScope('profile');
@@ -50,11 +50,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 
-
   @override
   Future<void> signOut() async {
     await Future.wait([
-      _firebaseAuth.signOut()
+      _firebaseAuth.signOut() // Sign out from Firebase Authentication
     ]);
   }
 
@@ -63,7 +62,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final fbUser = _firebaseAuth.currentUser;
     if (fbUser == null) return null;
 
-    await fbUser.reload();
+    await fbUser.reload(); // Refresh user data from Firebase
     final refreshed = _firebaseAuth.currentUser;
     if (refreshed == null) return null;
 

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:staff_webapp/domain/entities/user_entity.dart';
 
+/// Data model representing a user, mapping Firebase User to the domain's [UserEntity]
+/// This class lives in the data layer and contains implementation details
 class UserModel extends User {
   const UserModel({
     required super.id,
@@ -11,6 +13,8 @@ class UserModel extends User {
     super.photoUrl,
   });
 
+  /// Factory method to convert Firebase User to UserModel
+  /// Handles default values for optional fields and provider setup
   factory UserModel.fromFirebaseUser(
     fb.User firebaseUser, {
     bool isAuthorized = true,

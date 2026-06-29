@@ -4,10 +4,10 @@ class Admin {
   final String id;         // Firebase Auth uid
   final String email;
   final String name;
-  final AdminRole role;
+  final AdminRole role;    // The role of the admin, determining their permissions and access levels
   final String? schoolId;  // null for super_admin
-  final bool isActive;
-  final DateTime createdAt;
+  final bool isActive;     // Indicates whether the admin account is active
+  final DateTime createdAt; // Timestamp when the admin account was created
 
   const Admin({
     required this.id,
@@ -19,9 +19,11 @@ class Admin {
     required this.createdAt,
   });
 
+  // Checks if the admin is a super admin
   bool get isSuperAdmin => role == AdminRole.superAdmin;
 
-  // Can this admin access a given school's data?
+  // Determines if the admin can access data for a specific school
+  // Super admins have access to all schools, while regular admins can only access their assigned school
   bool canAccessSchool(String schoolId) =>
       isSuperAdmin || this.schoolId == schoolId;
 }

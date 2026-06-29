@@ -3,6 +3,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:staff_webapp/domain/entities/pending_admin_entity.dart';
 
+/// Model for handling pending admin data persistence and retrieval from Firestore
+/// This class maps between Firestore documents and the domain entity
 class PendingAdminModel extends PendingAdmin {
   const PendingAdminModel({
     required super.id,
@@ -12,6 +14,8 @@ class PendingAdminModel extends PendingAdmin {
     required super.requestedAt,
   });
 
+  /// Creates a model instance from a Firestore document
+  /// Handles null values and default fallbacks for required fields
   factory PendingAdminModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return PendingAdminModel(
@@ -24,6 +28,8 @@ class PendingAdminModel extends PendingAdmin {
     );
   }
 
+  /// Converts model to Firestore-compatible map for persistence
+  /// Uses server timestamp for requestedAt field
   Map<String, dynamic> toFirestore() => {
         'email': email,
         'name': name,

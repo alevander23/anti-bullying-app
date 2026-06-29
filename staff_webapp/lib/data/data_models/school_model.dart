@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:staff_webapp/domain/entities/school_entity.dart';
 
+/// Data model for Firestore representation of a school entity
+/// Maps directly to the SchoolEntity in the domain layer
+/// Handles serialization/deserialization between Firestore and domain objects
 class SchoolModel extends School {
   const SchoolModel({
     required super.id,
@@ -13,6 +16,8 @@ class SchoolModel extends School {
     super.autoGroupWindowDays = 5,
   });
 
+  /// Creates a SchoolModel from a Firestore document snapshot
+  /// Handles default values for optional fields and type conversions
   factory SchoolModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return SchoolModel(
@@ -27,6 +32,8 @@ class SchoolModel extends School {
     );
   }
 
+  /// Converts this model to a Firestore-compatible map
+  /// Uses server timestamp for createdAt and includes optional fields conditionally
   Map<String, dynamic> toFirestore() => {
     'name': name,
     'address': address,
@@ -34,6 +41,6 @@ class SchoolModel extends School {
     'createdAt': FieldValue.serverTimestamp(),
     if (resolvedReportRetentionDays != null)
       'resolvedReportRetentionDays': resolvedReportRetentionDays,
-      'autoGroupWindowDays': autoGroupWindowDays,
+    'autoGroupWindowDays': autoGroupWindowDays,
   };
 }

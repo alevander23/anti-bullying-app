@@ -17,7 +17,8 @@ class AuthRepositoryImpl implements AuthRepository {
         _firebaseAuth = firebaseAuth;
 
   // Stream
-
+  // Converts Firebase auth state changes into a stream of UserModel entities
+  // Null indicates no authenticated user
   @override
   Stream<User?> get authStateChanges {
     return _firebaseAuth.authStateChanges().asyncMap((fbUser) async {
@@ -27,15 +28,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   // Sign in
-
+  // Uses remote data source to handle Microsoft authentication flow
   @override
   Future<Either<Failure, User>> signInWithMicrosoft() =>
       _runAuthAction(
         () => _remoteDataSource.signInWithMicrosoft(),
         provider: AuthProvider.microsoft,
       );
-  // Sign out
 
+  // Sign out
+  // Handles sign-out operations and maps Firebase-specific errors to domain failures
   @override
   Future<Either<Failure, void>> signOut() async {
     try {
@@ -49,7 +51,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   // Current user
-
+  // Retrieves current user from remote data source and handles authentication errors
   @override
   Future<Either<Failure, User?>> getCurrentUser() async {
     try {
@@ -63,7 +65,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   // Helpers
-
+  // Generic method to handle authentication operations and map errors
+  // Accepts an auth action and provider type, returns user or failure
   Future<Either<Failure, User>> _runAuthAction(
     Future<UserModel> Function() action, {
     required AuthProvider provider,
@@ -78,6 +81,8 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  // Maps Firebase authentication errors to domain-specific failure objects
+  // Uses pattern matching to handle specific error codes
   Failure _mapFirebaseError(fb.FirebaseAuthException e, AuthProvider provider) {
     final message = switch (e.code) {
       'cancelled-by-user'                          => 'Sign-in was cancelled.',

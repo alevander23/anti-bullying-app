@@ -7,6 +7,7 @@ class GroupModel {
   static IncidentGroup fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
 
+    // Convert people involved list from Firestore format to domain objects
     List<PersonInvolved> people = [];
     if (d['peopleInvolved'] is List) {
       people = (d['peopleInvolved'] as List).map((e) {
@@ -19,6 +20,7 @@ class GroupModel {
       }).toList();
     }
 
+    // Convert timeline entries from Firestore format to domain objects
     List<GroupTimelineEntry> timeline = [];
     if (d['timeline'] is List) {
       timeline = (d['timeline'] as List).map((e) {
@@ -77,6 +79,7 @@ class GroupModel {
     List<String>? tags,
     GroupTimelineEntry? timelineEntry,
   }) {
+    // Build a map of fields to update with server timestamps for timestamps
     final map = <String, dynamic>{
       'updatedAt': FieldValue.serverTimestamp(),
     };
