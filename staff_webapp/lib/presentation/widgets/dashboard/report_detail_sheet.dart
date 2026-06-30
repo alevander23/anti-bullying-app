@@ -135,6 +135,22 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
                 style: const TextStyle(height: 1.5, fontSize: 15)),
             const SizedBox(height: 24),
 
+            if (report.mediaUrls.isNotEmpty) ...[
+              const Text('Attached Media',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: report.mediaUrls.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) => _MediaThumb(url: report.mediaUrls[i]),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
             // Status selection for updating report status
             const Text('Update Status',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -234,6 +250,185 @@ class _Chip extends StatelessWidget {
       child: Text(label,
           style: TextStyle(
               color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Media thumbnail which fetches the file with the staff member's auth token
+// since the server only serves /uploads to verified admins
+// ---------------------------------------------------------------------------
+
+class _MediaThumb extends StatelessWidget {
+  final String url;
+  const _MediaThumb({required this.url});
+
+  bool get _isVideo => url.contains('/videos/');
+
+  Future<Uint8List> _fetchProtectedFile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('Not signed in');
+    final token = await user.getIdToken();
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) return response.bodyBytes;
+    throw Exception('Failed to load media (${response.statusCode})');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showDialog(
+        context: context,
+        builder: (_) => _MediaViewerDialog(url: url, isVideo: _isVideo),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: _isVideo
+            ? Container(
+                width: 100,
+                height: 100,
+                color: Colors.black12,
+                child: const Icon(Icons.play_circle_outline,
+                    size: 36, color: Colors.blueGrey),
+              )
+            : FutureBuilder<Uint8List>(
+                future: _fetchProtectedFile(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Image.memory(
+                      snapshot.data!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.red.shade50,
+                      child: const Icon(Icons.error_outline,
+                          color: Colors.red, size: 24),
+                    );
+                  }
+                  return Container(
+                    width: 100,
+                    height: 100,
+                    color: Colors.black12,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Full-screen viewer dialog which is opened when a thumbnail is tapped
+// ---------------------------------------------------------------------------
+
+class _MediaViewerDialog extends StatelessWidget {
+  final String url;
+  final bool isVideo;
+  const _MediaViewerDialog({required this.url, required this.isVideo});
+
+  Future<Uint8List> _fetchProtectedFile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('Not signed in');
+    final token = await user.getIdToken();
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) return response.bodyBytes;
+    throw Exception('Failed to load media (${response.statusCode})');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(16),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 600),
+            child: isVideo
+                ? _VideoNotSupportedNotice(url: url)
+                : FutureBuilder<Uint8List>(
+                    future: _fetchProtectedFile(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return InteractiveViewer(
+                          child: Image.memory(snapshot.data!, fit: BoxFit.contain),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return const Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Text('Failed to load image',
+                              style: TextStyle(color: Colors.white)),
+                        );
+                      }
+                      return const Padding(
+                        padding: EdgeInsets.all(48),
+                        child: CircularProgressIndicator(color: Colors.white),
+                      );
+                    },
+                  ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// This is just a placeholder for playback yk. Don't forget to implement this before the testing rounds begin MAX
+class _VideoNotSupportedNotice extends StatelessWidget {
+  final String url;
+  const _VideoNotSupportedNotice({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.videocam_outlined, color: Colors.white, size: 48),
+          const SizedBox(height: 16),
+          const Text(
+            'Video preview not yet supported in-app.',
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            url,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
