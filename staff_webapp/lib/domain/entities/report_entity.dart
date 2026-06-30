@@ -26,6 +26,7 @@ class Report {
   final String? resolvedBy;
   final String? deviceIdentifier;
   final List<String> bullyNames;
+  final List<String> mediaUrls;
 
   const Report({
     required this.id,
@@ -44,6 +45,7 @@ class Report {
     this.resolvedBy,
     this.deviceIdentifier,
     this.bullyNames = const [],
+    this.mediaUrls = const [],
   });
 
   /// Returns true if the report is in the 'newReport' status.
@@ -66,6 +68,7 @@ class Report {
     String? resolvedBy,
     String? deviceIdentifier,
     List<String>? bullyNames,
+    List<String>? mediaUrls,
     bool clearResolvedBy = false,
     bool clearClosedAt = false,
   }) {
@@ -86,6 +89,7 @@ class Report {
       resolvedBy: clearResolvedBy ? null : (resolvedBy ?? this.resolvedBy),
       deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
       bullyNames: bullyNames ?? this.bullyNames,
+      mediaUrls: mediaUrls ?? this.mediaUrls,
     );
   }
 }

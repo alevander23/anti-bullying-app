@@ -1,5 +1,9 @@
 // lib/presentation/pages/report_page.dart
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -129,6 +133,7 @@ class _ReportPageState extends State<ReportPage> {
 
   String? _selectedCategory;
   final List<String> _bullyNames = [];
+  final List<XFile> _mediaFiles = [];
 
   late final SubmitReportCubit _cubit;
 
@@ -162,6 +167,48 @@ class _ReportPageState extends State<ReportPage> {
   void _removeBullyName(int index) =>
       setState(() => _bullyNames.removeAt(index));
 
+  Future<void> _pickMedia() async {
+    final picker = ImagePicker();
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose photo from gallery'),
+              onTap: () async {
+                Navigator.pop(context);
+                final files = await picker.pickMultiImage(imageQuality: 85);
+                setState(() => _mediaFiles.addAll(files));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a photo'),
+              onTap: () async {
+                Navigator.pop(context);
+                final file = await picker.pickImage(
+                  source: ImageSource.camera, imageQuality: 85);
+                if (file != null) setState(() => _mediaFiles.add(file));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Choose video from gallery'),
+              onTap: () async {
+                Navigator.pop(context);
+                final file = await picker.pickVideo(source: ImageSource.gallery);
+                if (file != null) setState(() => _mediaFiles.add(file));
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _submit() {
     _addBullyName();
     _cubit.submitReport(
@@ -170,6 +217,7 @@ class _ReportPageState extends State<ReportPage> {
       description: _descriptionController.text.trim(),
       category: _selectedCategory!,
       bullyNames: List.unmodifiable(_bullyNames),
+      mediaFiles: List.unmodifiable(_mediaFiles),
     );
   }
 
@@ -180,6 +228,7 @@ class _ReportPageState extends State<ReportPage> {
     setState(() {
       _selectedCategory = null;
       _bullyNames.clear();
+      _mediaFiles.clear();
     });
     _cubit.reset();
   }
@@ -391,9 +440,21 @@ class _ReportPageState extends State<ReportPage> {
                       onRemove: _removeBullyName,
                     ),
 
+                    const SizedBox(height: 20),
+                    const _Divider(),
+                    const SizedBox(height: 20),
+
+                    // ── MEDIA ATTACHMENTS ─────────────────────────────
+                    _MediaPickerField(
+                      files: _mediaFiles,
+                      enabled: !state.loading,
+                      onPickMedia: _pickMedia,
+                      onRemove: (i) => setState(() => _mediaFiles.removeAt(i)),
+                    ),
+
                     const SizedBox(height: 28),
 
-                    // ── SUBMIT BUTTON ─────────────────────────────────
+// ── SUBMIT BUTTON ─────────────────────────────────
                     _SubmitButton(
                       isValid: _isFormValid,
                       isLoading: state.loading,
@@ -899,6 +960,107 @@ class _BullyNamesField extends StatelessWidget {
         ],
       ],
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Media picker sub-widget
+// ---------------------------------------------------------------------------
+
+class _MediaPickerField extends StatelessWidget {
+  final List<XFile> files; // ← CHANGED from List<File>
+  final bool enabled;
+  final VoidCallback onPickMedia;
+  final void Function(int) onRemove;
+
+  const _MediaPickerField({
+    required this.files,
+    required this.enabled,
+    required this.onPickMedia,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Attach photos or videos',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Optional — add evidence if you have it',
+          style: TextStyle(fontSize: 12, color: Color(0xFF7BBAD8)),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: enabled ? onPickMedia : null,
+          icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+          label: const Text('Add photo or video'),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: _Palette.fieldBorder, width: 1.2),
+            foregroundColor: _Palette.primary,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+        if (files.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 90,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: files.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final isVideo = lookupMimeType(files[i].path)?.startsWith('video/') ?? false;
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: isVideo
+                          ? Container(
+                              width: 80, height: 80,
+                              color: Colors.black12,
+                              child: const Icon(Icons.play_circle_outline,
+                                  color: _Palette.primary, size: 32),
+                            )
+                          : _ImageThumb(file: files[i]), // ← CHANGED: delegate to platform-safe widget
+                    ),
+                    Positioned(
+                      top: 2, right: 2,
+                      child: GestureDetector(
+                        onTap: enabled ? () => onRemove(i) : null,
+                        child: const CircleAvatar(
+                          radius: 10, backgroundColor: Colors.black54,
+                          child: Icon(Icons.close, size: 12, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ImageThumb extends StatelessWidget {
+  final XFile file;
+  const _ImageThumb({required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      // On web, XFile.path is a blob URL where Image.network handles it fine
+      return Image.network(file.path, width: 80, height: 80, fit: BoxFit.cover);
+    }
+    // On Android/iOS, use a real File from dart:io
+    return Image.file(File(file.path), width: 80, height: 80, fit: BoxFit.cover);
   }
 }
 

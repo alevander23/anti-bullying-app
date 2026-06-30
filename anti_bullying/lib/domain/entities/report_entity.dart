@@ -21,6 +21,7 @@ class ReportEntity extends Equatable {
   final String? resolvedBy;
   final String? deviceIdentifier;
   final List<String> bullyNames;
+  final List<String> mediaUrls; // ← ADDED
 
   const ReportEntity({
     required this.id,
@@ -39,12 +40,13 @@ class ReportEntity extends Equatable {
     this.resolvedBy,
     this.deviceIdentifier,
     this.bullyNames = const [],
+    this.mediaUrls = const [], // ← ADDED
   });
 
   @override
   List<Object?> get props => [
         id, schoolId, title, description, category, status, priority,
         isFlagged, submittedAt, updatedAt, reviewedBy, notes,
-        closedAt, resolvedBy, deviceIdentifier, bullyNames,
+        closedAt, resolvedBy, deviceIdentifier, bullyNames, mediaUrls, // ← ADDED
       ];
 }

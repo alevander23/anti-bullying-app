@@ -20,6 +20,7 @@ class ReportModel extends Report {
     super.resolvedBy,
     super.deviceIdentifier,
     super.bullyNames = const [],
+    super.mediaUrls = const [],
   });
 
   // Converts a Firestore document snapshot into a ReportModel instance
@@ -47,6 +48,9 @@ class ReportModel extends Report {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      mediaUrls: (data['mediaUrls'] as List<dynamic>?)
+        ?.map((e) => e as String)
+        .toList() ?? [],
     );
   }
 
@@ -68,6 +72,7 @@ class ReportModel extends Report {
     'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
     'resolvedBy': resolvedBy,
     'deviceIdentifier': deviceIdentifier,
+    'mediaUrls': mediaUrls,
   };
 
   // Builds a map of only the fields that can be updated after initial creation
