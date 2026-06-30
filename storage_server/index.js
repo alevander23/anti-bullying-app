@@ -8,6 +8,7 @@ const cors          = require('cors');
 const helmet        = require('helmet');
 const rateLimit      = require('express-rate-limit');
 const admin          = require('firebase-admin');
+const { fileTypeFromFile } = require('file-type');
 
 // ── Firebase Admin setup ─────────────────────────────────────────────────
 admin.initializeApp({
@@ -47,7 +48,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
       'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-      'video/mp4', 'video/quicktime', 'video/webm',
+      'video/mp4', 'video/quicktime', 'video/webm', 'video/mov',
     ];
     const allowedExts = /\.(jpg|jpeg|png|webp|gif|mp4|mov|webm)$/i;
 
@@ -119,21 +120,57 @@ app.post(
   uploadLimiter,
   verifyFirebaseToken,
   upload.single('file'),
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file received' });
     }
-    const subdir = req.file.mimetype.startsWith('video/') ? 'videos' : 'images';
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${subdir}/${req.file.filename}`;
 
-    console.log(`Saved: ${req.file.path} (${(req.file.size / 1024).toFixed(1)} KB)`);
+    try {
+      const detected = await fileTypeFromFile(req.file.path);
 
-    res.json({
-      url: fileUrl,
-      filename: req.file.filename,
-      size: req.file.size,
-      mimetype: req.file.mimetype,
-    });
+      const allowedMimes = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'video/mp4',
+        'video/quicktime',
+        'video/webm',
+      ];
+
+      if (!detected || !allowedMimes.includes(detected.mime)) {
+        fs.unlinkSync(req.file.path);
+
+        return res.status(400).json({
+          error: 'Invalid file contents',
+        });
+      }
+
+      const subdir = detected.mime.startsWith('video/')
+        ? 'videos'
+        : 'images';
+
+      const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${subdir}/${req.file.filename}`;
+
+      console.log(
+        `Saved: ${req.file.path} (${(req.file.size / 1024).toFixed(1)} KB)`
+      );
+
+      res.json({
+        url: fileUrl,
+        filename: req.file.filename,
+        size: req.file.size,
+        mimetype: detected.mime,
+      });
+    } catch (err) {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      res.status(500).json({
+        error: 'File validation failed',
+      });
+    }
   }
 );
 

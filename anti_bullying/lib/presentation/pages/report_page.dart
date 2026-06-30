@@ -77,6 +77,15 @@ class _Category {
 // Shared decoration helpers
 // ---------------------------------------------------------------------------
 
+bool _isVideoFile(XFile file) {
+  final mimeType = lookupMimeType(file.name) ?? lookupMimeType(file.path);
+  if (mimeType != null) return mimeType.startsWith('video/');
+
+  // Fallback: check the extension directly
+  final ext = file.name.split('.').last.toLowerCase();
+  return {'mp4', 'mov', 'webm'}.contains(ext);
+}
+
 InputDecoration _fieldDecoration({
   required String label,
   required IconData icon,
@@ -206,7 +215,7 @@ class _ReportPageState extends State<ReportPage> {
               title: const Text('Choose video from gallery'),
               onTap: () async {
                 Navigator.pop(context);
-                final file = await picker.pickVideo(source: ImageSource.gallery);
+                final file = await picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(minutes: 7));
                 if (file != null) _addValidatedFiles([file]);
               },
             ),
@@ -1018,7 +1027,7 @@ class _BullyNamesField extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _MediaPickerField extends StatelessWidget {
-  final List<XFile> files; // ← CHANGED from List<File>
+  final List<XFile> files;
   final bool enabled;
   final VoidCallback onPickMedia;
   final void Function(int) onRemove;
@@ -1064,7 +1073,7 @@ class _MediaPickerField extends StatelessWidget {
               itemCount: files.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
-                final isVideo = lookupMimeType(files[i].path)?.startsWith('video/') ?? false;
+                final isVideo = _isVideoFile(files[i]);
                 return Stack(
                   children: [
                     ClipRRect(

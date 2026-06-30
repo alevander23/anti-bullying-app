@@ -2,6 +2,11 @@ import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:video_player/video_player.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html show AnchorElement;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
@@ -365,7 +370,7 @@ class _MediaViewerDialog extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 600),
             child: isVideo
-                ? _VideoNotSupportedNotice(url: url)
+                ? _VideoPlayerView(url: url)
                 : FutureBuilder<Uint8List>(
                     future: _fetchProtectedFile(),
                     builder: (context, snapshot) {
@@ -402,30 +407,266 @@ class _MediaViewerDialog extends StatelessWidget {
   }
 }
 
-// This is just a placeholder for playback yk. Don't forget to implement this before the testing rounds begin MAX
-class _VideoNotSupportedNotice extends StatelessWidget {
+class _VideoPlayerView extends StatefulWidget {
   final String url;
-  const _VideoNotSupportedNotice({required this.url});
+  const _VideoPlayerView({required this.url});
+
+  @override
+  State<_VideoPlayerView> createState() => _VideoPlayerViewState();
+}
+
+class _VideoPlayerViewState extends State<_VideoPlayerView> {
+  VideoPlayerController? _controller;
+  String? _error;
+  bool _downloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('Not signed in');
+      final token = await user.getIdToken();
+
+      final response = await http.get(
+        Uri.parse(widget.url),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load video (${response.statusCode})');
+      }
+
+      // video_player needs a source it can stream — a data URI works
+      // across platforms (web + desktop) without needing a temp file.
+      final base64Data = base64Encode(response.bodyBytes);
+      final mimeType = widget.url.endsWith('.mov')
+          ? 'video/quicktime'
+          : widget.url.endsWith('.webm')
+              ? 'video/webm'
+              : 'video/mp4';
+      final dataUri = 'data:$mimeType;base64,$base64Data';
+
+      final controller = VideoPlayerController.networkUrl(Uri.parse(dataUri));
+      await controller.initialize();
+
+      if (!mounted) return;
+      setState(() => _controller = controller);
+      controller.play();
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    }
+  }
+
+  Future<void> _downloadFallback() async {
+    setState(() => _downloading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('Not signed in');
+      final token = await user.getIdToken();
+
+      final response = await http.get(
+        Uri.parse(widget.url),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Download failed (${response.statusCode})');
+      }
+
+      final mimeType = widget.url.endsWith('.mov')
+          ? 'video/quicktime'
+          : widget.url.endsWith('.webm')
+              ? 'video/webm'
+              : 'video/mp4';
+      final ext = widget.url.endsWith('.mov')
+          ? 'mov'
+          : widget.url.endsWith('.webm')
+              ? 'webm'
+              : 'mp4';
+      final base64Data = base64Encode(response.bodyBytes);
+      final dataUri = 'data:$mimeType;base64,$base64Data';
+
+      if (kIsWeb) {
+        final anchor = html.AnchorElement(href: dataUri)
+          ..setAttribute('download', 'report_video.$ext')
+          ..click();
+        anchor.remove();
+      } else {
+        final launched = await launchUrl(
+          Uri.parse(dataUri),
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open the video')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Download failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _downloading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.videocam_outlined, color: Colors.white, size: 48),
-          const SizedBox(height: 16),
-          const Text(
-            'Video preview not yet supported in-app.',
-            style: TextStyle(color: Colors.white),
-            textAlign: TextAlign.center,
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 40),
+            const SizedBox(height: 12),
+            const Text('Failed to load video',
+                style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 4),
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            _DownloadButton(
+              downloading: _downloading,
+              onPressed: _downloadFallback,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return const Padding(
+        padding: EdgeInsets.all(48),
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: Stack(
+              children: [
+                Positioned.fill(child: VideoPlayer(controller)),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _VideoControls(controller: controller),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            url,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-            textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        _DownloadButton(
+          downloading: _downloading,
+          onPressed: _downloadFallback,
+        ),
+      ],
+    );
+  }
+}
+
+class _DownloadButton extends StatelessWidget {
+  final bool downloading;
+  final VoidCallback onPressed;
+
+  const _DownloadButton({required this.downloading, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: downloading ? null : onPressed,
+      icon: downloading
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          : const Icon(Icons.download, color: Colors.white, size: 18),
+      label: Text(downloading ? 'Preparing...' : 'Download video'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Colors.white54),
+      ),
+    );
+  }
+}
+
+class _VideoControls extends StatefulWidget {
+  final VideoPlayerController controller;
+  const _VideoControls({required this.controller});
+
+  @override
+  State<_VideoControls> createState() => _VideoControlsState();
+}
+
+class _VideoControlsState extends State<_VideoControls> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTick);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTick);
+    super.dispose();
+  }
+
+  void _onTick() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    final value = widget.controller.value;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: Colors.black54,
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(
+              value.isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                value.isPlaying
+                    ? widget.controller.pause()
+                    : widget.controller.play();
+              });
+            },
+          ),
+          Expanded(
+            child: Slider(
+              value: value.position.inMilliseconds
+                  .clamp(0, value.duration.inMilliseconds)
+                  .toDouble(),
+              max: value.duration.inMilliseconds.toDouble().clamp(1, double.infinity),
+              onChanged: (v) {
+                widget.controller.seekTo(Duration(milliseconds: v.toInt()));
+              },
+            ),
           ),
         ],
       ),
