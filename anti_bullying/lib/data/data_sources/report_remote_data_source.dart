@@ -50,14 +50,21 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     final urls = <String>[];
 
     for (final file in files) {
-      final mimeType = lookupMimeType(file.path) ?? 'application/octet-stream';
+      final bytes = await file.readAsBytes();
+
+      // fall back to path, then fall back to sniffing the actual bytes
+      final mimeType = lookupMimeType(file.name, headerBytes: bytes) ??
+          lookupMimeType(file.path, headerBytes: bytes) ??
+          'application/octet-stream';
+
+      if (!mimeType.startsWith('image/') && !mimeType.startsWith('video/')) {
+        throw Exception('Unsupported file type: $mimeType');
+      }
+
       final parts = mimeType.split('/');
 
       final request = http.MultipartRequest('POST', Uri.parse('$_serverBaseUrl/upload'));
       request.headers['Authorization'] = 'Bearer $token';
-
-      // isn't a real filesystem path on web
-      final bytes = await file.readAsBytes();
       request.files.add(http.MultipartFile.fromBytes(
         'file',
         bytes,

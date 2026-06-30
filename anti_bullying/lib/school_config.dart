@@ -8,7 +8,7 @@ class SchoolConfig {
   static const String schoolId = 'school_greenfield';
   /// Shown in the app bar and hero card.
   static const String schoolName = 'Greenfield School';
-  static const String storageServerIP = 'http://whatever the server ip is:whatever the port is';
+  static const String storageServerIP = 'http://localhost:3000';
 
   SchoolConfig._();
 }

@@ -4,6 +4,11 @@
 .DS_Store
 Thumbs.db
 *.log
+*.bak
+*.env
+*/service-account.json
+storage_server/uploads/
+storage_server/node_modules/
 
 # IDE config
 .vscode/
