@@ -12,6 +12,13 @@ import '../bloc/submit_report_state.dart';
 import '../../domain/use_cases/submit_report_use_case.dart';
 import '../../school_config.dart';
 
+
+const _allowedMimePrefixes = ['image/', 'video/'];
+const _allowedExtensions = {
+  'jpg', 'jpeg', 'png', 'webp', 'gif', // images
+  'mp4', 'mov', 'webm',                 // videos
+};
+
 // ---------------------------------------------------------------------------
 // Palette
 // ---------------------------------------------------------------------------
@@ -181,7 +188,7 @@ class _ReportPageState extends State<ReportPage> {
               onTap: () async {
                 Navigator.pop(context);
                 final files = await picker.pickMultiImage(imageQuality: 85);
-                setState(() => _mediaFiles.addAll(files));
+                _addValidatedFiles(files);
               },
             ),
             ListTile(
@@ -191,7 +198,7 @@ class _ReportPageState extends State<ReportPage> {
                 Navigator.pop(context);
                 final file = await picker.pickImage(
                   source: ImageSource.camera, imageQuality: 85);
-                if (file != null) setState(() => _mediaFiles.add(file));
+                if (file != null) _addValidatedFiles([file]);
               },
             ),
             ListTile(
@@ -200,13 +207,45 @@ class _ReportPageState extends State<ReportPage> {
               onTap: () async {
                 Navigator.pop(context);
                 final file = await picker.pickVideo(source: ImageSource.gallery);
-                if (file != null) setState(() => _mediaFiles.add(file));
+                if (file != null) _addValidatedFiles([file]);
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  // central place that filters and reports rejected files
+  void _addValidatedFiles(List<XFile> files) {
+    final valid = <XFile>[];
+    var rejectedCount = 0;
+
+    for (final f in files) {
+      if (_isValidMediaFile(f)) {
+        valid.add(f);
+      } else {
+        rejectedCount++;
+      }
+    }
+
+    if (valid.isNotEmpty) {
+      setState(() => _mediaFiles.addAll(valid));
+    }
+
+    if (rejectedCount > 0 && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            rejectedCount == 1
+                ? 'One file was not a supported photo or video and was skipped.'
+                : '$rejectedCount files were not supported photos or videos and were skipped.',
+          ),
+          backgroundColor: const Color(0xFFE53E3E),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _submit() {
@@ -232,6 +271,17 @@ class _ReportPageState extends State<ReportPage> {
     });
     _cubit.reset();
   }
+
+  bool _isValidMediaFile(XFile file) {
+  final mimeType = lookupMimeType(file.path) ?? lookupMimeType(file.name);
+  final ext = file.name.split('.').last.toLowerCase();
+
+  final mimeOk = mimeType != null &&
+      _allowedMimePrefixes.any((p) => mimeType.startsWith(p));
+  final extOk = _allowedExtensions.contains(ext);
+
+  return mimeOk && extOk;
+}
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
