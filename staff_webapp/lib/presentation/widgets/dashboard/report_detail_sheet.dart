@@ -1,16 +1,20 @@
-import 'dart:typed_data';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:video_player/video_player.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html show AnchorElement;
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:video_player/video_player.dart';
+
+import 'package:staff_webapp/di.dart';
 import 'package:staff_webapp/domain/entities/admin_entity.dart';
 import 'package:staff_webapp/domain/entities/report_entity.dart';
+import 'package:staff_webapp/presentation/bloc/media/media_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/media/media_state.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
+
+// dart:html is web-only; guarded behind kIsWeb at every call site below.
+import 'dart:html' as html show AnchorElement;
 
 class ReportDetailSheet extends StatefulWidget {
   final Report report;
@@ -140,17 +144,24 @@ class _ReportDetailSheetState extends State<ReportDetailSheet> {
                 style: const TextStyle(height: 1.5, fontSize: 15)),
             const SizedBox(height: 24),
 
+            // Attached media section (photos/videos submitted with report).
+            // MediaCubit is scoped to this sheet via BlocProvider below so
+            // every thumbnail and the full-screen dialog share one cache.
             if (report.mediaUrls.isNotEmpty) ...[
               const Text('Attached Media',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: report.mediaUrls.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (_, i) => _MediaThumb(url: report.mediaUrls[i]),
+              BlocProvider<MediaCubit>(
+                create: (_) => getIt<MediaCubit>(),
+                child: SizedBox(
+                  height: 100,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: report.mediaUrls.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) =>
+                        _MediaThumb(url: report.mediaUrls[i]),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -260,26 +271,25 @@ class _Chip extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Media thumbnail which fetches the file with the staff member's auth token
-// since the server only serves /uploads to verified admins
+// Media thumbnail. Triggers MediaCubit.fetchMedia and renders whatever
+// state comes back via BlocBuilder. No direct Firebase/HTTP calls here.
 // ---------------------------------------------------------------------------
 
-class _MediaThumb extends StatelessWidget {
+class _MediaThumb extends StatefulWidget {
   final String url;
   const _MediaThumb({required this.url});
 
-  bool get _isVideo => url.contains('/videos/');
+  @override
+  State<_MediaThumb> createState() => _MediaThumbState();
+}
 
-  Future<Uint8List> _fetchProtectedFile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('Not signed in');
-    final token = await user.getIdToken();
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) return response.bodyBytes;
-    throw Exception('Failed to load media (${response.statusCode})');
+class _MediaThumbState extends State<_MediaThumb> {
+  bool get _isVideo => widget.url.contains('/videos/');
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<MediaCubit>().fetchMedia(widget.url);
   }
 
   @override
@@ -287,7 +297,10 @@ class _MediaThumb extends StatelessWidget {
     return GestureDetector(
       onTap: () => showDialog(
         context: context,
-        builder: (_) => _MediaViewerDialog(url: url, isVideo: _isVideo),
+        builder: (_) => BlocProvider.value(
+          value: context.read<MediaCubit>(),
+          child: _MediaViewerDialog(url: widget.url, isVideo: _isVideo),
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -299,18 +312,21 @@ class _MediaThumb extends StatelessWidget {
                 child: const Icon(Icons.play_circle_outline,
                     size: 36, color: Colors.blueGrey),
               )
-            : FutureBuilder<Uint8List>(
-                future: _fetchProtectedFile(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
+            : BlocBuilder<MediaCubit, MediaState>(
+                buildWhen: (prev, curr) =>
+                    prev.statusFor(widget.url) != curr.statusFor(widget.url),
+                builder: (context, state) {
+                  final item = state.statusFor(widget.url);
+
+                  if (item?.status == MediaFetchStatus.loaded) {
                     return Image.memory(
-                      snapshot.data!,
+                      item!.bytes!,
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
                     );
                   }
-                  if (snapshot.hasError) {
+                  if (item?.status == MediaFetchStatus.error) {
                     return Container(
                       width: 100,
                       height: 100,
@@ -339,25 +355,13 @@ class _MediaThumb extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Full-screen viewer dialog which is opened when a thumbnail is tapped
+// Full-screen viewer dialog, opened when a thumbnail is tapped.
 // ---------------------------------------------------------------------------
 
 class _MediaViewerDialog extends StatelessWidget {
   final String url;
   final bool isVideo;
   const _MediaViewerDialog({required this.url, required this.isVideo});
-
-  Future<Uint8List> _fetchProtectedFile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('Not signed in');
-    final token = await user.getIdToken();
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) return response.bodyBytes;
-    throw Exception('Failed to load media (${response.statusCode})');
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -371,15 +375,18 @@ class _MediaViewerDialog extends StatelessWidget {
             constraints: const BoxConstraints(maxHeight: 600),
             child: isVideo
                 ? _VideoPlayerView(url: url)
-                : FutureBuilder<Uint8List>(
-                    future: _fetchProtectedFile(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
+                : BlocBuilder<MediaCubit, MediaState>(
+                    buildWhen: (prev, curr) =>
+                        prev.statusFor(url) != curr.statusFor(url),
+                    builder: (context, state) {
+                      final item = state.statusFor(url);
+
+                      if (item?.status == MediaFetchStatus.loaded) {
                         return InteractiveViewer(
-                          child: Image.memory(snapshot.data!, fit: BoxFit.contain),
+                          child: Image.memory(item!.bytes!, fit: BoxFit.contain),
                         );
                       }
-                      if (snapshot.hasError) {
+                      if (item?.status == MediaFetchStatus.error) {
                         return const Padding(
                           padding: EdgeInsets.all(32),
                           child: Text('Failed to load image',
@@ -407,6 +414,12 @@ class _MediaViewerDialog extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Video player. Fetches bytes via MediaCubit (not directly), then hands
+// video_player a data: URI since it can't attach auth headers reliably
+// across platforms.
+// ---------------------------------------------------------------------------
+
 class _VideoPlayerView extends StatefulWidget {
   final String url;
   const _VideoPlayerView({required this.url});
@@ -417,103 +430,12 @@ class _VideoPlayerView extends StatefulWidget {
 
 class _VideoPlayerViewState extends State<_VideoPlayerView> {
   VideoPlayerController? _controller;
-  String? _error;
-  bool _downloading = false;
+  bool _initializing = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('Not signed in');
-      final token = await user.getIdToken();
-
-      final response = await http.get(
-        Uri.parse(widget.url),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode != 200) {
-        throw Exception('Failed to load video (${response.statusCode})');
-      }
-
-      // video_player needs a source it can stream — a data URI works
-      // across platforms (web + desktop) without needing a temp file.
-      final base64Data = base64Encode(response.bodyBytes);
-      final mimeType = widget.url.endsWith('.mov')
-          ? 'video/quicktime'
-          : widget.url.endsWith('.webm')
-              ? 'video/webm'
-              : 'video/mp4';
-      final dataUri = 'data:$mimeType;base64,$base64Data';
-
-      final controller = VideoPlayerController.networkUrl(Uri.parse(dataUri));
-      await controller.initialize();
-
-      if (!mounted) return;
-      setState(() => _controller = controller);
-      controller.play();
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    }
-  }
-
-  Future<void> _downloadFallback() async {
-    setState(() => _downloading = true);
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('Not signed in');
-      final token = await user.getIdToken();
-
-      final response = await http.get(
-        Uri.parse(widget.url),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode != 200) {
-        throw Exception('Download failed (${response.statusCode})');
-      }
-
-      final mimeType = widget.url.endsWith('.mov')
-          ? 'video/quicktime'
-          : widget.url.endsWith('.webm')
-              ? 'video/webm'
-              : 'video/mp4';
-      final ext = widget.url.endsWith('.mov')
-          ? 'mov'
-          : widget.url.endsWith('.webm')
-              ? 'webm'
-              : 'mp4';
-      final base64Data = base64Encode(response.bodyBytes);
-      final dataUri = 'data:$mimeType;base64,$base64Data';
-
-      if (kIsWeb) {
-        final anchor = html.AnchorElement(href: dataUri)
-          ..setAttribute('download', 'report_video.$ext')
-          ..click();
-        anchor.remove();
-      } else {
-        final launched = await launchUrl(
-          Uri.parse(dataUri),
-          mode: LaunchMode.externalApplication,
-        );
-        if (!launched && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open the video')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Download failed: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _downloading = false);
-    }
+    context.read<MediaCubit>().fetchMedia(widget.url);
   }
 
   @override
@@ -522,89 +444,151 @@ class _VideoPlayerViewState extends State<_VideoPlayerView> {
     super.dispose();
   }
 
+  String _mimeTypeFor(String url) {
+    if (url.endsWith('.mov')) return 'video/quicktime';
+    if (url.endsWith('.webm')) return 'video/webm';
+    return 'video/mp4';
+  }
+
+  String _extensionFor(String url) {
+    if (url.endsWith('.mov')) return 'mov';
+    if (url.endsWith('.webm')) return 'webm';
+    return 'mp4';
+  }
+
+  Future<void> _initPlayer(Uint8List bytes) async {
+    if (_initializing || _controller != null) return;
+    _initializing = true;
+
+    final base64Data = base64Encode(bytes);
+    final dataUri = 'data:${_mimeTypeFor(widget.url)};base64,$base64Data';
+
+    final controller = VideoPlayerController.networkUrl(Uri.parse(dataUri));
+    await controller.initialize();
+
+    if (!mounted) return;
+    setState(() => _controller = controller);
+    controller.play();
+  }
+
+  void _downloadBytes(Uint8List bytes) {
+    if (!kIsWeb) return;
+    final mimeType = _mimeTypeFor(widget.url);
+    final ext = _extensionFor(widget.url);
+    final base64Data = base64Encode(bytes);
+    final dataUri = 'data:$mimeType;base64,$base64Data';
+
+    final anchor = html.AnchorElement(href: dataUri)
+      ..setAttribute('download', 'report_video.$ext')
+      ..click();
+    anchor.remove();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white, size: 40),
-            const SizedBox(height: 12),
-            const Text('Failed to load video',
-                style: TextStyle(color: Colors.white)),
-            const SizedBox(height: 4),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            _DownloadButton(
-              downloading: _downloading,
-              onPressed: _downloadFallback,
-            ),
-          ],
-        ),
-      );
-    }
+    return BlocBuilder<MediaCubit, MediaState>(
+      buildWhen: (prev, curr) =>
+          prev.statusFor(widget.url) != curr.statusFor(widget.url),
+      builder: (context, state) {
+        final item = state.statusFor(widget.url);
 
-    final controller = _controller;
-    if (controller == null || !controller.value.isInitialized) {
-      return const Padding(
-        padding: EdgeInsets.all(48),
-        child: CircularProgressIndicator(color: Colors.white),
-      );
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: Stack(
+        if (item?.status == MediaFetchStatus.error) {
+          return Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Positioned.fill(child: VideoPlayer(controller)),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _VideoControls(controller: controller),
+                const Icon(Icons.error_outline, color: Colors.white, size: 40),
+                const SizedBox(height: 12),
+                const Text('Failed to load video',
+                    style: TextStyle(color: Colors.white)),
+                const SizedBox(height: 4),
+                Text(
+                  item?.errorMessage ?? '',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.read<MediaCubit>().retry(widget.url),
+                  icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
+                  label: const Text('Retry'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
                 ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _DownloadButton(
-          downloading: _downloading,
-          onPressed: _downloadFallback,
-        ),
-      ],
+          );
+        }
+
+        if (item?.status != MediaFetchStatus.loaded) {
+          return const Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+
+        final bytes = item!.bytes!;
+        // ignore: discarded_futures
+        _initPlayer(bytes);
+
+        final controller = _controller;
+        if (controller == null || !controller.value.isInitialized) {
+          return Padding(
+            padding: const EdgeInsets.all(48),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: 16),
+                _DownloadButton(onPressed: () => _downloadBytes(bytes)),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: AspectRatio(
+                aspectRatio: controller.value.aspectRatio,
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: VideoPlayer(controller)),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _VideoControls(controller: controller),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _DownloadButton(onPressed: () => _downloadBytes(bytes)),
+          ],
+        );
+      },
     );
   }
 }
 
 class _DownloadButton extends StatelessWidget {
-  final bool downloading;
   final VoidCallback onPressed;
 
-  const _DownloadButton({required this.downloading, required this.onPressed});
+  const _DownloadButton({required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
-      onPressed: downloading ? null : onPressed,
-      icon: downloading
-          ? const SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-          : const Icon(Icons.download, color: Colors.white, size: 18),
-      label: Text(downloading ? 'Preparing...' : 'Download video'),
+      onPressed: onPressed,
+      icon: const Icon(Icons.download, color: Colors.white, size: 18),
+      label: const Text('Download video'),
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.white,
         side: const BorderSide(color: Colors.white54),

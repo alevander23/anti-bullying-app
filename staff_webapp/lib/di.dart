@@ -10,16 +10,19 @@ import 'package:staff_webapp/data/data_sources/auth_remote_data_source_impl.dart
 import 'package:staff_webapp/data/data_sources/user_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/admin_remote_data_source.dart';
 import 'package:staff_webapp/data/data_sources/group_remote_data_source.dart';
+import 'package:staff_webapp/data/data_sources/media_remote_data_source.dart';
 import 'package:staff_webapp/data/repository_implementations/auth_repository_impl.dart';
 import 'package:staff_webapp/data/repository_implementations/user_repository_impl.dart';
 
 import 'package:staff_webapp/data/repository_implementations/admin_repository_impl.dart';
 import 'package:staff_webapp/data/repository_implementations/group_repository_impl.dart';
+import 'package:staff_webapp/data/repository_implementations/media_repository_impl.dart';
 
 import 'package:staff_webapp/domain/repository_contracts/auth_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/user_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/admin_repository.dart';
 import 'package:staff_webapp/domain/repository_contracts/group_repository.dart';
+import 'package:staff_webapp/domain/repository_contracts/media_repository.dart';
 
 import 'package:staff_webapp/domain/use_cases/login_use_case.dart';
 import 'package:staff_webapp/domain/use_cases/sign_in_with_microsoft.dart';
@@ -27,6 +30,7 @@ import 'package:staff_webapp/domain/use_cases/sign_out_use_case.dart';
 import 'package:staff_webapp/domain/use_cases/get_current_user_use_case.dart';
 
 import 'package:staff_webapp/presentation/bloc/auth_cubit.dart';
+import 'package:staff_webapp/presentation/bloc/media/media_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/report/report_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/school/school_cubit.dart';
 import 'package:staff_webapp/presentation/bloc/group/group_cubit.dart';
@@ -74,6 +78,9 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<GroupRemoteDataSource>(
     GroupRemoteDataSource(firestore: getIt<FirebaseFirestore>()),
   );
+  getIt.registerSingleton<MediaRemoteDataSource>(
+    MediaRemoteDataSourceImpl(firebaseAuth: getIt<FirebaseAuth>()),
+  );
 
   // Register domain layer repositories - implementations that use data sources
   getIt.registerSingleton<UserRepository>(
@@ -90,6 +97,9 @@ Future<void> setupDependencies() async {
   );
   getIt.registerSingleton<GroupRepository>(
     GroupRepositoryImpl(getIt<GroupRemoteDataSource>()),
+  );
+  getIt.registerSingleton<MediaRepository>(
+    MediaRepositoryImpl(getIt<MediaRemoteDataSource>()),
   );
 
   // Register domain layer use cases - business logic that uses repositories
@@ -126,5 +136,8 @@ Future<void> setupDependencies() async {
   );
   getIt.registerFactory<SettingsCubit>(
     () => SettingsCubit(getIt<AdminRepository>()),
+  );
+  getIt.registerFactory<MediaCubit>(
+    () => MediaCubit(getIt<MediaRepository>()),
   );
 }

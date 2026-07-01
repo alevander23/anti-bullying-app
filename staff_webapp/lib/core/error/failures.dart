@@ -60,3 +60,8 @@ class SchoolAccessFailure extends Failure {
 class FirestoreFailure extends Failure {
   const FirestoreFailure(super.message);
 }
+
+// Failure fetching a protected media file (photo/video) from the storage server
+class MediaFailure extends Failure {
+  const MediaFailure([super.message = 'Failed to load media']);
+}

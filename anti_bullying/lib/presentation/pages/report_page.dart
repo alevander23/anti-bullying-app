@@ -1086,7 +1086,7 @@ class _MediaPickerField extends StatelessWidget {
                               child: const Icon(Icons.play_circle_outline,
                                   color: _Palette.primary, size: 32),
                             )
-                          : _ImageThumb(file: files[i]), // ← CHANGED: delegate to platform-safe widget
+                          : _ImageThumb(file: files[i]),
                     ),
                     Positioned(
                       top: 2, right: 2,
