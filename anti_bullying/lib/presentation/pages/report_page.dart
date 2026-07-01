@@ -1,6 +1,7 @@
 // lib/presentation/pages/report_page.dart
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
@@ -1202,29 +1203,55 @@ class _SuccessCard extends StatelessWidget {
                   border: Border.all(
                       color: const Color(0xFFCCE4F5), width: 1),
                 ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Reference number',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF7BBAD8),
-                        letterSpacing: 0.5,
-                      ),
+                child: Center(
+                  child: SelectionArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Reference number',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF7BBAD8),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              reportId!,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF278ACB),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8), // Clean spacing between the text and icon
+                            IconButton(
+                              icon: const Icon(Icons.copy, color: Color(0xFF278ACB), size: 18),
+                              padding: EdgeInsets.zero, // Shrinks the button's clickable padding box
+                              constraints: const BoxConstraints(), // Removes default minimum sizing
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: reportId!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Reference number copied to clipboard!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      reportId!,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF278ACB),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
