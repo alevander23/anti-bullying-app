@@ -79,7 +79,7 @@ class _Category {
 // ---------------------------------------------------------------------------
 
 bool _isVideoFile(XFile file) {
-  final mimeType = lookupMimeType(file.name) ?? lookupMimeType(file.path);
+  final mimeType = lookupMimeType(file.path) ?? lookupMimeType(file.name);
   if (mimeType != null) return mimeType.startsWith('video/');
 
   // Fallback: check the extension directly
