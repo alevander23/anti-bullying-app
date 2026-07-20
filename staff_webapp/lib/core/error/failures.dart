@@ -1,12 +1,3 @@
-// This entire file was written by Claude
-
-// lib/core/error/failures.dart
-//
-// WHY: Replacing raw `String` errors with typed Failures gives you:
-//   - Exhaustive pattern matching in the UI (no forgotten cases)
-//   - Richer metadata (e.g. original exception, codes) without coupling layers
-//   - Easy extension: add NetworkFailure, etc. independently
-
 abstract class Failure {
   final String message;
   const Failure(this.message);
@@ -43,17 +34,23 @@ class UnexpectedFailure extends Failure {
 
 // Admin System related failures
 class PermissionFailure extends Failure {
-  const PermissionFailure([super.message = 'You do not have permission to perform this action']);
+  const PermissionFailure([
+    super.message = 'You do not have permission to perform this action',
+  ]);
 }
 
 // Failure when a requested resource is not found
 class NotFoundFailure extends Failure {
-  const NotFoundFailure([super.message = 'The requested resource was not found']);
+  const NotFoundFailure([
+    super.message = 'The requested resource was not found',
+  ]);
 }
 
 // Failure when a user does not have access to a school's data
 class SchoolAccessFailure extends Failure {
-  const SchoolAccessFailure([super.message = 'You do not have access to this school\'s data']);
+  const SchoolAccessFailure([
+    super.message = 'You do not have access to this school\'s data',
+  ]);
 }
 
 // Firestore operation failures
