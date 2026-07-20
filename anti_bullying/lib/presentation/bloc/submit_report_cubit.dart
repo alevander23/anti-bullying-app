@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'submit_report_state.dart';
 import '../../../domain/use_cases/submit_report_use_case.dart';
 
+// drives the report form's submit button, handles the upload then write sequence
 class SubmitReportCubit extends Cubit<SubmitReportState> {
   final SubmitReportUseCase _submitUseCase;
 
@@ -40,5 +41,6 @@ class SubmitReportCubit extends Cubit<SubmitReportState> {
     }
   }
 
+  // used after a successful submit to clear the form back to a blank state
   void reset() => emit(SubmitReportState.initial());
 }

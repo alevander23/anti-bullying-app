@@ -9,19 +9,23 @@ import 'domain/use_cases/get_school_config_use_case.dart';
 
 final getIt = GetIt.instance;
 
+// wires up the whole dependency chain, call once at app startup before runApp
 Future<void> setupDependencies() async {
   getIt.registerSingleton<FirebaseFirestore>(
     FirebaseFirestore.instance,
   );
 
+  // data source needs firestore, so it goes right after
   getIt.registerSingleton<ReportRemoteDataSource>(
     ReportRemoteDataSourceImpl(getIt<FirebaseFirestore>()),
   );
 
+  // repository wraps the data source behind the domain contract
   getIt.registerSingleton<ReportRepository>(
     ReportRepositoryImpl(getIt<ReportRemoteDataSource>()),
   );
 
+  // use cases sit on top of the repository, this is what the UI actually calls
   getIt.registerSingleton<SubmitReportUseCase>(
     SubmitReportUseCase(getIt<ReportRepository>()),
   );

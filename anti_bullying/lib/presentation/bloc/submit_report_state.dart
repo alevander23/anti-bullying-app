@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+// single state object for the whole submit flow instead of a bunch of separate classes
 class SubmitReportState extends Equatable {
   final bool loading;
   final bool success;
@@ -25,6 +26,7 @@ class SubmitReportState extends Equatable {
       loading: loading ?? this.loading,
       success: success ?? this.success,
       reportId: reportId ?? this.reportId,
+      // no fallback here on purpose, this lets us clear the error by passing null
       error: error,
     );
   }

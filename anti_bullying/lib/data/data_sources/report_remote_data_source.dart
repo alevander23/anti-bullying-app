@@ -24,8 +24,10 @@ abstract class ReportRemoteDataSource {
   Future<SchoolConfigEntity> getSchoolConfig(String schoolId);
 }
 
+// talks to Firestore directly and to our own storage server for media uploads
 class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   final FirebaseFirestore _firestore;
+  // storage server lives outside firebase, configured per school
   static const String _serverBaseUrl = SchoolConfig.storageServerIP;
 
   ReportRemoteDataSourceImpl(this._firestore);
@@ -49,6 +51,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     final token = await _getAuthToken();
     final urls = <String>[];
 
+    // uploading one at a time, keeps error handling per file simple
     for (final file in files) {
       final bytes = await file.readAsBytes();
 
@@ -57,12 +60,14 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
           lookupMimeType(file.path, headerBytes: bytes) ??
           'application/octet-stream';
 
+      // only images and video are allowed on the storage server
       if (!mimeType.startsWith('image/') && !mimeType.startsWith('video/')) {
         throw Exception('Unsupported file type: $mimeType');
       }
 
       final parts = mimeType.split('/');
 
+      // build the multipart upload with auth token attached
       final request = http.MultipartRequest('POST', Uri.parse('$_serverBaseUrl/upload'));
       request.headers['Authorization'] = 'Bearer $token';
       request.files.add(http.MultipartFile.fromBytes(
@@ -72,6 +77,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         contentType: MediaType(parts[0], parts[1]),
       ));
 
+      // big files or slow connections can take a while, give it a generous timeout
       final streamedResponse = await request.send().timeout(const Duration(minutes: 5));
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -79,6 +85,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         throw Exception('Upload failed (${response.statusCode}): ${response.body}');
       }
 
+      // server hands back the final url after storing the file
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       urls.add(data['url'] as String);
     }
@@ -96,6 +103,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     required List<String> mediaUrls,
     String? deviceIdentifier,
   }) async {
+    // new reports always start as new/normal/unflagged, staff update these later
     final doc = await _firestore.collection('reports').add({
       'schoolId': schoolId,
       'title': title,
@@ -122,12 +130,14 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
   Future<SchoolConfigEntity> getSchoolConfig(String schoolId) async {
     final doc = await _firestore.collection('schools').doc(schoolId).get();
 
+    // bad school id in the build config, fail loud so it gets caught early
     if (!doc.exists) {
       throw Exception('No school found with ID "$schoolId". Check SchoolConfig.schoolId.');
     }
 
     final data = doc.data() ?? {};
 
+    // default to active/schoolId if the doc is missing fields for some reason
     return SchoolConfigEntity(
       schoolId: schoolId,
       schoolName: data['name'] as String? ?? schoolId,

@@ -21,6 +21,7 @@ class _StartupPageState extends State<StartupPage> {
   @override
   void initState() {
     super.initState();
+    // kick off the validation as soon as the widget is mounted
     _cubit = SchoolStartupCubit(GetIt.I<GetSchoolConfigUseCase>());
     _cubit.validateSchool();
   }

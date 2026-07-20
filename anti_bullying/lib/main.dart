@@ -5,6 +5,7 @@ import 'di.dart';
 import 'presentation/pages/startup_page.dart';
 
 Future<void> main() async {
+  // needed before any firebase or plugin calls since we're doing async setup pre-runApp
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await setupDependencies();
@@ -22,6 +23,7 @@ class UserReportApp extends StatelessWidget {
         colorSchemeSeed: Colors.indigo,
         useMaterial3: true,
       ),
+      // startup page decides whether to go to the report form based on the school config
       home: const StartupPage(),
       debugShowCheckedModeBanner: false,
     );

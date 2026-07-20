@@ -1,6 +1,7 @@
 import 'package:image_picker/image_picker.dart';
 import '../repository_contracts/report_repository.dart';
 
+// handles the two step flow, upload media first, then submit the report itself
 class SubmitReportUseCase {
   final ReportRepository repository;
 
@@ -10,6 +11,7 @@ class SubmitReportUseCase {
   Future<List<String>> uploadMedia(List<XFile> files) =>
       repository.uploadMediaFiles(files);
 
+  // called after uploadMedia so mediaUrls is already populated
   Future<String> execute({
     required String schoolId,
     required String title,

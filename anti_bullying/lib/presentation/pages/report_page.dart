@@ -14,6 +14,7 @@ import '../../domain/use_cases/submit_report_use_case.dart';
 import '../../school_config.dart';
 
 
+// checked against both mime type and extension since mime lookup can miss on some platforms
 const _allowedMimePrefixes = ['image/', 'video/'];
 const _allowedExtensions = {
   'jpg', 'jpeg', 'png', 'webp', 'gif', // images
@@ -24,6 +25,7 @@ const _allowedExtensions = {
 // Palette
 // ---------------------------------------------------------------------------
 
+// centralized colors so the whole page stays visually consistent
 class _Palette {
   // Brand — sky blue (#278acb)
   static const primary       = Color(0xFF278ACB);
@@ -60,6 +62,7 @@ class _Palette {
 // Category helpers
 // ---------------------------------------------------------------------------
 
+// values here map directly to what gets sent to firestore as the category string
 const _categories = [
   _Category('bullying',   'Bullying',   Icons.person_off_outlined),
   _Category('harassment', 'Harassment', Icons.warning_amber_outlined),
@@ -78,6 +81,7 @@ class _Category {
 // Shared decoration helpers
 // ---------------------------------------------------------------------------
 
+// used to decide whether to show a play icon or an actual image thumbnail
 bool _isVideoFile(XFile file) {
   final mimeType = lookupMimeType(file.path) ?? lookupMimeType(file.name);
   if (mimeType != null) return mimeType.startsWith('video/');
@@ -87,6 +91,7 @@ bool _isVideoFile(XFile file) {
   return {'mp4', 'mov', 'webm'}.contains(ext);
 }
 
+// shared styling so every text field on this page looks the same
 InputDecoration _fieldDecoration({
   required String label,
   required IconData icon,
@@ -144,6 +149,7 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
+  // controllers own the text field state, disposed below
   final _titleController       = TextEditingController();
   final _descriptionController = TextEditingController();
   final _bullyNameController   = TextEditingController();
@@ -162,16 +168,19 @@ class _ReportPageState extends State<ReportPage> {
 
   @override
   void dispose() {
+    // controllers need explicit disposal or they leak
     _titleController.dispose();
     _descriptionController.dispose();
     _bullyNameController.dispose();
     super.dispose();
   }
 
+  // title is optional, description and category are the only required fields
   bool get _isFormValid =>
       _descriptionController.text.trim().isNotEmpty &&
       _selectedCategory != null;
 
+  // adds whatever is currently typed in the name field to the list
   void _addBullyName() {
     final name = _bullyNameController.text.trim();
     if (name.isEmpty) return;
@@ -184,6 +193,7 @@ class _ReportPageState extends State<ReportPage> {
   void _removeBullyName(int index) =>
       setState(() => _bullyNames.removeAt(index));
 
+  // shows a bottom sheet with the three ways to attach media
   Future<void> _pickMedia() async {
     final picker = ImagePicker();
     showModalBottomSheet(
@@ -258,6 +268,7 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+  // grabs whatever's left in the name input before firing off the submit
   void _submit() {
     _addBullyName();
     _cubit.submitReport(
@@ -270,6 +281,7 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
+  // wipes the form back to blank, called after a successful submit
   void _resetForm() {
     _titleController.clear();
     _descriptionController.clear();
@@ -282,6 +294,7 @@ class _ReportPageState extends State<ReportPage> {
     _cubit.reset();
   }
 
+  // double check on both mime type and extension, some platforms only give us one
   bool _isValidMediaFile(XFile file) {
   final mimeType = lookupMimeType(file.path) ?? lookupMimeType(file.name);
   final ext = file.name.split('.').last.toLowerCase();
@@ -295,6 +308,7 @@ class _ReportPageState extends State<ReportPage> {
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
+  // swaps between the form and the success card depending on submit state
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -535,6 +549,7 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
+  // shows a snackbar for success or error, actual state transitions happen in builder
   void _onStateChange(BuildContext context, SubmitReportState state) {
     if (state.success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -571,6 +586,7 @@ class _ReportPageState extends State<ReportPage> {
 // Anonymous banner
 // ---------------------------------------------------------------------------
 
+// reassures students up top that the report can't be traced back to them
 class _AnonymousBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -632,6 +648,7 @@ class _AnonymousBanner extends StatelessWidget {
 // Card header strip
 // ---------------------------------------------------------------------------
 
+// thin strip at the top of the form card with the title and required-fields hint
 class _CardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -678,6 +695,7 @@ class _CardHeader extends StatelessWidget {
 // Small section label
 // ---------------------------------------------------------------------------
 
+// appends the little asterisk for required sections so we don't repeat it everywhere
 class _SectionLabel extends StatelessWidget {
   final String text;
   const _SectionLabel(this.text);
@@ -717,6 +735,7 @@ class _Divider extends StatelessWidget {
 // Category selector — pill toggle group
 // ---------------------------------------------------------------------------
 
+// pill toggle group, only one category can be active at a time
 class _CategorySelector extends StatelessWidget {
   final String? selected;
   final bool enabled;
@@ -733,6 +752,7 @@ class _CategorySelector extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
+      // one pill per category, highlighted when it matches the current selection
       children: _categories.map((cat) {
         final isSelected = selected == cat.value;
         return AnimatedContainer(
@@ -792,6 +812,7 @@ class _CategorySelector extends StatelessWidget {
 // Submit button
 // ---------------------------------------------------------------------------
 
+// grays itself out and disables tapping until the form is actually valid
 class _SubmitButton extends StatelessWidget {
   final bool isValid;
   final bool isLoading;
@@ -805,6 +826,7 @@ class _SubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // button only lights up once the form passes validation and isn't already submitting
     final canSubmit = isValid && !isLoading;
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 200),
@@ -841,6 +863,7 @@ class _SubmitButton extends StatelessWidget {
             ),
           ),
           onPressed: canSubmit ? onPressed : null,
+          // swap the label for a spinner while the submit request is in flight
           child: isLoading
               ? const SizedBox(
                   width: 22,
@@ -877,6 +900,7 @@ class _SubmitButton extends StatelessWidget {
 // Footer note
 // ---------------------------------------------------------------------------
 
+// small print under the card, sets expectations on response time
 class _FooterNote extends StatelessWidget {
   const _FooterNote();
 
@@ -903,6 +927,7 @@ class _FooterNote extends StatelessWidget {
 // Bully names sub-widget
 // ---------------------------------------------------------------------------
 
+// optional field for naming people involved, names get collected into chips
 class _BullyNamesField extends StatelessWidget {
   final TextEditingController controller;
   final List<String> names;
@@ -941,6 +966,7 @@ class _BullyNamesField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
+        // text input plus the add button, enter key also triggers add
         Row(
           children: [
             Expanded(
@@ -975,6 +1001,7 @@ class _BullyNamesField extends StatelessWidget {
 
         if (names.isNotEmpty) ...[
           const SizedBox(height: 10),
+          // renders each added name as a removable chip
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -1027,6 +1054,7 @@ class _BullyNamesField extends StatelessWidget {
 // Media picker sub-widget
 // ---------------------------------------------------------------------------
 
+// optional evidence attachments, opens the bottom sheet from the parent page
 class _MediaPickerField extends StatelessWidget {
   final List<XFile> files;
   final bool enabled;
@@ -1067,6 +1095,7 @@ class _MediaPickerField extends StatelessWidget {
         ),
         if (files.isNotEmpty) ...[
           const SizedBox(height: 10),
+          // horizontal strip of thumbnails, videos just get a play icon placeholder
           SizedBox(
             height: 90,
             child: ListView.separated(
@@ -1088,6 +1117,7 @@ class _MediaPickerField extends StatelessWidget {
                             )
                           : _ImageThumb(file: files[i]),
                     ),
+                    // small x button in the corner to remove that file
                     Positioned(
                       top: 2, right: 2,
                       child: GestureDetector(
@@ -1109,6 +1139,7 @@ class _MediaPickerField extends StatelessWidget {
   }
 }
 
+// handles the web vs native difference in how XFile paths get loaded as images
 class _ImageThumb extends StatelessWidget {
   final XFile file;
   const _ImageThumb({required this.file});
@@ -1128,6 +1159,7 @@ class _ImageThumb extends StatelessWidget {
 // Success card
 // ---------------------------------------------------------------------------
 
+// shown after a successful submit, gives the student a reference number to note down
 class _SuccessCard extends StatelessWidget {
   final String? reportId;
   final VoidCallback onAnother;
@@ -1193,6 +1225,7 @@ class _SuccessCard extends StatelessWidget {
             ),
             if (reportId != null && reportId!.isNotEmpty) ...[
               const SizedBox(height: 20),
+              // reference number box, tappable to copy since students may need to quote it later
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(

@@ -3,6 +3,7 @@ import '../data_sources/report_remote_data_source.dart';
 import '../../domain/entities/school_config_entity.dart';
 import '../../domain/repository_contracts/report_repository.dart';
 
+// just delegates everything to the remote data source, no extra logic here yet
 class ReportRepositoryImpl implements ReportRepository {
   final ReportRemoteDataSource remoteDataSource;
 

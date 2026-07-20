@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+// three states for the startup flow, loading while we fetch config, then ready or error
 abstract class SchoolStartupState extends Equatable {
   const SchoolStartupState();
   @override
@@ -10,6 +11,7 @@ class SchoolStartupLoading extends SchoolStartupState {
   const SchoolStartupLoading();
 }
 
+// fetched school config successfully, carries the name to show on the UI
 class SchoolStartupReady extends SchoolStartupState {
   final String schoolName;
   const SchoolStartupReady(this.schoolName);
